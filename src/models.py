@@ -9,13 +9,10 @@ class ssf_asf_1024_1024(nn.Module):
 		  nn.ReLU(),
 		  nn.Linear(1024,1024),
 		  nn.ReLU(),
-		  nn.Linear(1024,4096),
-                  nn.Softmax(dim=1)
+		  nn.Linear(1024,4096)
 		)
 
-  def forward(self, state, action_mask):
-    action_all = self.net(state)
-    action_legal = action_all*action_mask
-    return nn.functional.normalize(action_legal, p=1)
+  def forward(self, state):
+    return self.net(state)
 
 
