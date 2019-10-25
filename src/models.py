@@ -3,6 +3,18 @@ import torch.nn as nn
 
 import numpy as np
 
+class fc_res_block(nn.Module):
+    def __init__(self, hidden_size):
+        self.block = nn.Sequential(
+            nn.Linear(hidden_size, hidden_size),
+            nn.ReLU(),
+            nn.Linear(hidden_size, hidden_size),
+            )
+        
+    def forward(self, x):
+        out = self.block(x)
+        return nn.functional.ReLU(out+x)
+
 class ssf_asf_1024_1024(nn.Module):
   def __init__(self):
     super(ssf_asf_1024_1024,self).__init__()
