@@ -1,6 +1,9 @@
 import chess
 import numpy as np
 
+def array_to_bitboard(x):
+  return int(''.join(map(str,map(int,x[::-1]))),2)
+
 def board_to_state(board):
   black,white = board.occupied_co
   res = np.zeros(773, np.float)
@@ -13,6 +16,44 @@ def board_to_state(board):
   res[771] = board.has_queenside_castling_rights(True)
   res[772] = board.turn
   return res
+
+def state_to_board(state):
+  board = chess.Board()
+  grid = np.array(state[:768].reshape(12,64))
+
+  black = array_to_bitboard(grid[:6].sum(axis=0))
+  white = array_to_bitboard(grid[6:].sum(axis=0))
+
+  board.occupied_co = [black,white]
+  board.occupied = black|white
+
+  board.pawns = array_to_bitboard(grid[0]+grid[6])
+  board.bishops = array_to_bitboard(grid[1]+grid[7])
+  board.knights = array_to_bitboard(grid[2]+grid[8])
+  board.rooks = array_to_bitboard(grid[3]+grid[9])
+  board.queens = array_to_bitboard(grid[4]+grid[10])
+  board.kings = array_to_bitboard(grid[5]+grid[11])
+
+  castling_fen = ''
+
+  if (state[770] == 1):
+    castling_fen += 'K'
+  if (state[771] == 1):
+    castling_fen += 'Q'
+  if (state[768] == 1):
+    castling_fen += 'k'
+  if (state[769] == 1):
+    castling_fen += 'q'
+
+  board.turn = (state[772]==1)
+
+  if castling_fen == '':
+    castling_fen = '-'
+
+  board.set_castling_fen(castling_fen)
+
+  return board
+
 
 def move_to_action(move):
   res = np.zeros((64,64), np.float)

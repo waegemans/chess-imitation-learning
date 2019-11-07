@@ -4,9 +4,9 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import data_util
 import sys
 import progressbar
+import data_util
 
 import chess
 import chess.engine
@@ -19,17 +19,18 @@ def init_weights(m):
 
 epochs = 20
 batch_size = 1<<12
+random_subset = None
 
-csv_file = open("output/out.csv", "w")
+log_file = open("output/out.csv", "w")
+move_file = open("output/moves.csv", "w")
 
-model = ssf_asf_1024_1024()
-#model = ssf_asf_512_512()
+#model = ssf_asf_1024_1024()
+model = ssf_asf_512_512()
 model.apply(init_weights)
 
 optimizer = optim.Adam(model.parameters(), lr=1e-3)
-scheduler = optim.lr_scheduler.StepLR(optimizer, 4, 0.3)
+scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.1, patience=0, verbose=True, threshold=1e-2)
 
-random_subset = None
 base_dataset = ChessMoveDataset()
 
 if random_subset is not None:
@@ -41,42 +42,73 @@ dataset,valset = torch.utils.data.random_split(base_dataset, [n_train,n_val])
 train_loader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=8, drop_last=True)
 val_loader = torch.utils.data.DataLoader(valset, batch_size=batch_size, shuffle=True)
 
-csv_file.write("epoch,train_cross_entropy_loss,val_cross_entropy_loss,train_acc,val_acc\n")
+log_file.write("epoch,batch_count,train_cross_entropy_loss,val_cross_entropy_loss,train_acc,val_acc\n")
+move_file.write("epoch,fen,stockfish_uci,predicted_uci\n")
 
 total_batch_count = 0
 
-for e in range(epochs):
-  print ("Epoch %d of %d:"%(e,epochs))
-  train_loss = 0
-  val_loss = 0
-  val_iter = iter(val_loader)
+def validate_batch():
+  x,y = next(iter(val_loader))
+  model.eval()
+  predicted = model(x)
+  val_loss = nn.functional.cross_entropy(predicted, y.argmax(dim=1),reduce='mean')
+  val_acc = (predicted.detach().argmax(dim=1) == y.argmax(dim=1)).numpy().mean()
+
+  return val_loss.detach().data.numpy(), val_acc
+
+
+def train():
+  global total_batch_count
   for x,y in progressbar.progressbar(train_loader,0,len(train_loader)):
     model.train()
     optimizer.zero_grad()
     #x,y = x.type(torch.float), y.type(torch.float)
 
     predicted = model(x)
-    loss = nn.functional.cross_entropy(predicted, y.argmax(dim=1),reduce='mean')
-    loss.backward()
+    train_loss = nn.functional.cross_entropy(predicted, y.argmax(dim=1),reduce='mean')
+    train_loss.backward()
     optimizer.step()
 
     train_acc = (predicted.detach().argmax(dim=1) == y.argmax(dim=1)).numpy().mean()
 
-    if total_batch_count%5==0:
-      x_val,y_val = next(val_iter)
-      model.eval()
-      
-      pred_val = model(x_val).detach()
-      loss_val = nn.functional.cross_entropy(pred_val, y_val.argmax(dim=1),reduce='mean')
+    val_loss = ''
+    val_acc = ''
 
-      val_acc = (pred_val.detach().argmax(dim=1) == y_val.argmax(dim=1)).numpy().mean()
-      
-      csv_file.write(','.join(map(str,[total_batch_count, loss.detach().data.numpy(), loss_val.detach().data.numpy(), train_acc, val_acc]))+'\n')
-      csv_file.flush()
+    if (total_batch_count % 10 == 0):
+      val_loss,val_acc = validate_batch()
+
+    log_file.write(','.join(map(str,[e,total_batch_count, train_loss.detach().data.numpy(), val_loss, train_acc, val_acc]))+'\n')
+    log_file.flush()
 
     total_batch_count += 1
-  scheduler.step()
+
+def validate():
+  samples = 0
+  loss = 0
+  for x,y in progressbar.progressbar(val_loader,0,len(val_loader)):
+    model.eval()
+    predicted = model(x).detach()
+    loss += nn.functional.cross_entropy(predicted, y.argmax(dim=1),reduce='sum')
+    samples += len(x)
+    for xi,yi,pi in zip(x,y,predicted):
+      board = data_util.state_to_board(xi)
+      legal_mask = data_util.movelist_to_actionmask(board.legal_moves)
+      agent_move = data_util.action_to_uci(yi)
+      pred_move = data_util.action_to_uci(pi.numpy()*legal_mask)
+      move_file.write(','.join(map(str,[e,board.fen(),agent_move,pred_move]))+'\n')
+      move_file.flush()
+  return (loss/samples)
+
+for e in range(epochs):
+  print ("Epoch %d of %d:"%(e,epochs))
+
+  train()
+  val_loss = validate()
+  print(val_loss)
+
+  scheduler.step(val_loss)
+
   torch.save(model, 'output/model_ep%d.nn'%e)
 
 
-csv_file.close()
+log_file.close()

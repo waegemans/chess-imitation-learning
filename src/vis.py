@@ -22,24 +22,25 @@ def smooth_window(x,size=7):
   return y
 
 data = pd.read_csv('output/tmp.csv')
+vdata = data.dropna()
 
 fig,ax = plt.subplots(2)
 
-ax[0].plot(data['epoch'],data['train_cross_entropy_loss'], color='blue', alpha=0.1)
-ax[0].plot(data['epoch'],data['val_cross_entropy_loss'], color='orange', alpha=0.1)
+ax[0].plot(data['batch_count'],data['train_cross_entropy_loss'], color='blue', alpha=0.1)
+ax[0].plot(vdata['batch_count'],vdata['val_cross_entropy_loss'], color='orange', alpha=0.1)
 
 
-ax[1].plot(data['epoch'],data['train_acc'], color='blue', alpha=0.1)
-ax[1].plot(data['epoch'],data['val_acc'], color='orange', alpha=0.1)
+ax[1].plot(data['batch_count'],data['train_acc'], color='blue', alpha=0.1)
+ax[1].plot(vdata['batch_count'],vdata['val_acc'], color='orange', alpha=0.1)
 
-ax[0].plot(data['epoch'],smooth_window(data['train_cross_entropy_loss']),label='Train Cross entropy', color='blue')
-ax[0].plot(data['epoch'],smooth_window(data['val_cross_entropy_loss']),label='Val Cross entropy', color='orange')
+ax[0].plot(data['batch_count'],smooth_window(data['train_cross_entropy_loss']),label='Train Cross entropy', color='blue')
+ax[0].plot(vdata['batch_count'],smooth_window(vdata['val_cross_entropy_loss']),label='Val Cross entropy', color='orange')
 
 
-ax[1].plot(data['epoch'],smooth_window(data['train_acc']),label='Training acc', color='blue')
-ax[1].plot(data['epoch'],smooth_window(data['val_acc']),label='Validation acc', color='orange')
+ax[1].plot(data['batch_count'],smooth_window(data['train_acc']),label='Training acc', color='blue')
+ax[1].plot(vdata['batch_count'],smooth_window(vdata['val_acc']),label='Validation acc', color='orange')
 
-for x in range(0,data['epoch'].data[-1],batches_per_epoch):
+for x in range(0,data['batch_count'].values[-1]+batches_per_epoch,batches_per_epoch):
   ax[0].axvline(x=x, ymin=0.0, ymax=1.0, color='r', alpha=0.1)
   ax[1].axvline(x=x, ymin=0.0, ymax=1.0, color='r', alpha=0.1)
 
