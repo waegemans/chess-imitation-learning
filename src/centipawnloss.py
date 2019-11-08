@@ -7,6 +7,8 @@ import chess.engine
 engine = chess.engine.SimpleEngine.popen_uci('../engine/stockfish_10_x64')
 
 moves = pd.read_csv('output/tmpmoves.csv')
+#shuffle moves
+moves = moves.sample(frac=1).reset_index(drop=True)
 
 
 log_file = open("output/centipawnloss_agg.csv", "w")
@@ -35,8 +37,6 @@ for key,group in moves.groupby('epoch'):
 
         centipawnloss += sf_score - pr_score
         count += 1
-        if count == 100:
-            break
     print (key,centipawnloss/count)
     log_file.write(','.join(map(str,[key,centipawnloss/count]))+'\n')
 

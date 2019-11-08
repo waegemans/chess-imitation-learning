@@ -36,7 +36,7 @@ base_dataset = ChessMoveDataset()
 if random_subset is not None:
   base_dataset,_ = torch.utils.data.random_split(base_dataset, [random_subset,len(base_dataset)-(random_subset)])
 
-n_train = int(0.8*len(base_dataset))
+n_train = int(0.9*len(base_dataset))
 n_val = len(base_dataset)- n_train
 dataset,valset = torch.utils.data.random_split(base_dataset, [n_train,n_val])
 train_loader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=8, drop_last=True)
@@ -89,14 +89,15 @@ def validate():
     model.eval()
     predicted = model(x).detach()
     loss += nn.functional.cross_entropy(predicted, y.argmax(dim=1),reduce='sum')
+    if samples < 1000:
+      for xi,yi,pi in zip(x,y,predicted):
+        board = data_util.state_to_board(xi)
+        legal_mask = data_util.movelist_to_actionmask(board.legal_moves)
+        agent_move = data_util.action_to_uci(yi)
+        pred_move = data_util.action_to_uci(pi.numpy()*legal_mask)
+        move_file.write(','.join(map(str,[e,board.fen(),agent_move,pred_move]))+'\n')
+        move_file.flush()
     samples += len(x)
-    for xi,yi,pi in zip(x,y,predicted):
-      board = data_util.state_to_board(xi)
-      legal_mask = data_util.movelist_to_actionmask(board.legal_moves)
-      agent_move = data_util.action_to_uci(yi)
-      pred_move = data_util.action_to_uci(pi.numpy()*legal_mask)
-      move_file.write(','.join(map(str,[e,board.fen(),agent_move,pred_move]))+'\n')
-      move_file.flush()
   return (loss/samples)
 
 for e in range(epochs):
