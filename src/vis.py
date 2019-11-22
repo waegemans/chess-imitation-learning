@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-batches_per_epoch = 1686
+batches_per_epoch = 29353
 
 def smooth_exp(x):
   y = np.zeros_like(x, dtype=np.float)
@@ -13,7 +13,7 @@ def smooth_exp(x):
       y[i] = 0.9*y[i-1]+0.1*xi
   return y
 
-def smooth_window(x,size=7):
+def smooth_window(x,size=101):
   y = np.convolve(x,np.ones(size),'same')
   n = size//2
   y[:n] /= size - np.arange(n,0,-1)
