@@ -17,7 +17,7 @@ def push_uci_queen(board,uci):
         #print("Defaulting to queen promotion")
         board.push_uci(uci+'q')
 
-model = torch.load('output/model_ep5.nn')
+model = torch.load('output/model_ep14.nn')
 model.eval()
 
 board = chess.Board()
@@ -25,10 +25,17 @@ player_color = False
 engine = chess.engine.SimpleEngine.popen_uci('../engine/stockfish_10_x64')
 
 move = 0
-while not board.is_game_over():
+while move < 900:
+  if board.is_game_over():
+      move += 1
+      svg = chess.svg.board(board)
+      with open('svg_0/move_'+str(move).zfill(3)+'.svg',"w") as f:
+        f.write(svg)
+      print(board.result())
+      board.reset()
   move += 1
   svg = chess.svg.board(board)
-  with open('svg_r/move_'+str(move).zfill(3)+'.svg',"w") as f:
+  with open('svg_0/move_'+str(move).zfill(3)+'.svg',"w") as f:
       f.write(svg)
   color = board.turn
   if color == player_color:
@@ -46,9 +53,22 @@ while not board.is_game_over():
   y = model(torch.tensor(state,dtype=torch.float).unsqueeze(0))[0]
   y -= y.min()
   action = y * torch.tensor(data_util.movelist_to_actionmask(board.legal_moves),dtype=torch.float)
+  #play according to prob
+  '''
+  np_action = action.detach().data.numpy()
+  mv = np.random.choice(len(np_action),1,p=np_action/np_action.sum())
+  mv_a = np.zeros_like(np_action)
+  mv_a[mv] = 1
+  #
+  pred_uci = data_util.action_to_uci(mv_a)
+  '''
   pred_uci = data_util.action_to_uci(action.detach().data)
 
   push_uci_queen(board,pred_uci)
 
-print(board)
+move += 1
+svg = chess.svg.board(board)
+with open('svg_0/move_'+str(move).zfill(3)+'.svg',"w") as f:
+    f.write(svg)
+
 engine.quit()
