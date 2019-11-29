@@ -27,22 +27,20 @@ engine = chess.engine.SimpleEngine.popen_uci('../engine/stockfish_10_x64')
 move = 0
 while not board.is_game_over():
   move += 1
-  print()
-  print("a b c d e f g h")
-  print(board)
   svg = chess.svg.board(board)
-  with open('svg_self/move_'+str(move).zfill(3)+'.svg',"w") as f:
+  with open('svg_r/move_'+str(move).zfill(3)+'.svg',"w") as f:
       f.write(svg)
   color = board.turn
   if color == player_color:
-      #mv = engine.play(board, limit=chess.engine.Limit(time=1))
+      #mv = engine.play(board, limit=chess.engine.Limit(depth=0))
       #board.push(mv.move)
-      #continue
-      print(list(map(lambda x: x.uci(), board.legal_moves)))
-      print("enter uci")
-      a = input()
-      board.push_uci(a)
+      board.push(np.random.choice(list(board.legal_moves),1)[0])
       continue
+      #print(list(map(lambda x: x.uci(), board.legal_moves)))
+      #print("enter uci")
+      #a = input()
+      #board.push_uci(a)
+      #continue
 
   state = data_util.board_to_state(board)
   y = model(torch.tensor(state,dtype=torch.float).unsqueeze(0))[0]
