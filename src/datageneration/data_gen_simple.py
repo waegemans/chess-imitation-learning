@@ -19,7 +19,7 @@ while True:
       # reset board if game is over
       board.reset()
 
-  result = engine.play(board, limit=chess.engine.Limit(depth=20))
+  result = engine.play(board, limit=chess.engine.Limit(depth=10))
   move_uci = result.move.uci()
 
   print(board.fen())

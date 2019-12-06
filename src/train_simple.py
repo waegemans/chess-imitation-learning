@@ -1,5 +1,5 @@
 from models import ssf_asf_1024_1024, ssf_asf_512_512, ssf_asf_512_512_512
-from dataset import ChessMoveDataset_pre
+from dataset import ChessMoveDataset_pre_it_pov
 import numpy as np
 import torch
 import torch.nn as nn
@@ -18,7 +18,7 @@ def init_weights(m):
     m.bias.data.fill_(0.01)
 
 epochs = 10
-batch_size = 1<<8
+batch_size = 1<<10
 random_subset = None
 
 log_file = open("output/out.csv", "w")
@@ -27,26 +27,27 @@ model = ssf_asf_1024_1024()
 #model = ssf_asf_512_512_512()
 model.apply(init_weights)
 
-optimizer = optim.Adam(model.parameters(), lr=1e-3)
+optimizer = optim.Adam(model.parameters(), lr=1e-3, betas=(0.99,0.999))
 scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.1, patience=0, verbose=True, threshold=1e-2)
 
-base_dataset = ChessMoveDataset_pre()
 
-if random_subset is not None:
-  base_dataset,_ = torch.utils.data.random_split(base_dataset, [random_subset,len(base_dataset)-(random_subset)])
+trainset,valset = ChessMoveDataset_pre_it_pov(),ChessMoveDataset_pre_it_pov(mode='val')
 
-n_train = int(0.9*len(base_dataset))
-n_val = len(base_dataset)- n_train
-dataset,valset = torch.utils.data.random_split(base_dataset, [n_train,n_val])
-train_loader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=False, num_workers=8, drop_last=True)
-val_loader = torch.utils.data.DataLoader(valset, batch_size=batch_size, shuffle=True)
-
+train_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=False, num_workers=8, drop_last=True)
+val_loader = torch.utils.data.DataLoader(valset, batch_size=batch_size, shuffle=False)
+val_iter = iter(val_loader)
 log_file.write("epoch,batch_count,train_cross_entropy_loss,val_cross_entropy_loss,train_acc,val_acc\n")
 
 total_batch_count = 0
 
 def validate_batch():
-  x,y = next(iter(val_loader))
+  global val_iter
+  x,y = None,None
+  try:
+    x,y = next(val_iter)
+  except:
+    val_iter = iter(val_loader)
+    x,y = next(val_iter)
   model.eval()
   predicted = model(x)
   val_loss = nn.functional.cross_entropy(predicted, y,reduction='mean')
@@ -57,7 +58,7 @@ def validate_batch():
 
 def train():
   global total_batch_count
-  for x,y in progressbar.progressbar(train_loader,0,len(train_loader)):
+  for x,y in progressbar.progressbar(train_loader,0,int(25930826*0.9/batch_size)+10):
     model.train()
     optimizer.zero_grad()
     #x,y = x.type(torch.float), y.type(torch.float)
@@ -83,7 +84,7 @@ def train():
 def validate():
   samples = 0
   loss = 0
-  for x,y in progressbar.progressbar(val_loader,0,len(val_loader)):
+  for x,y in progressbar.progressbar(val_loader):
     model.eval()
     predicted = model(x).detach()
     loss += nn.functional.cross_entropy(predicted, y,reduction='sum')

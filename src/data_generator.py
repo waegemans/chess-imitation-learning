@@ -31,7 +31,7 @@ while True:
         w.writerow([fen_without_count, result.move.uci()])
         move = result.move
   if np.random.uniform() < 0.1:
-      board.push(np.random.choice(list(board.legal_moves))[0])
+      board.push(np.random.choice(list(board.legal_moves)))
   else:
       board.push_uci(d[fen_without_count])
 

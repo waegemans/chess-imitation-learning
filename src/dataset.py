@@ -25,6 +25,77 @@ class ChessMoveDataset(torch.utils.data.Dataset):
     def __len__(self):
         return len(self.data)
 
+class ChessMoveDataset_it(torch.utils.data.IterableDataset):
+    def __init__(self):
+        super(ChessMoveDataset_it,self).__init__()
+        self.num_of_splits = 9
+
+    def __iter__(self):
+        it = None
+        worker_info = torch.utils.data.get_worker_info()
+        if worker_info is None:
+            it = range(0,self.num_of_splits,1)
+        else:
+            worker_id = worker_info.id
+            num_workers = worker_info.num_workers
+            it = range(worker_id, self.num_of_splits, num_workers)
+        
+        for idx in it:
+            with open("data/split/moves_shuffled_pov%d"%idx, "r") as csv_file:
+                r = csv.reader(csv_file)
+                for fen_without_count,move in r:
+                    b = chess.Board(fen=fen_without_count+" 0 1")
+                    m = chess.Move.from_uci(move)
+                    yield torch.tensor(data_util.board_to_state(b), dtype=torch.float) ,torch.tensor(data_util.move_to_action(m), dtype=torch.long)
+
+
+class ChessMoveDataset_pre_it(torch.utils.data.IterableDataset):
+    def __init__(self, mode='train'):
+        super(ChessMoveDataset_pre_it,self).__init__()
+        self.num_of_splits = 41
+        self.mode = mode
+
+    def __iter__(self):
+        it = None
+        worker_info = torch.utils.data.get_worker_info()
+        if worker_info is None:
+            it = range(0,self.num_of_splits,1)
+        else:
+            worker_id = worker_info.id
+            num_workers = worker_info.num_workers
+            it = range(worker_id, self.num_of_splits, num_workers)
+        
+        for idx in it:
+            b = np.load('data/pre/boards_%s_%d.npy'%(self.mode,idx))
+            m = np.load('data/pre/moves_%s_%d.npy'%(self.mode,idx))
+
+            for j in range(len(b)):
+                yield torch.tensor(b[j], dtype=torch.float) ,torch.tensor(m[j], dtype=torch.long)
+
+
+class ChessMoveDataset_pre_it_pov(torch.utils.data.IterableDataset):
+    def __init__(self, mode='train'):
+        super(ChessMoveDataset_pre_it_pov,self).__init__()
+        self.num_of_splits = 41
+        self.mode = mode
+
+    def __iter__(self):
+        it = None
+        worker_info = torch.utils.data.get_worker_info()
+        if worker_info is None:
+            it = range(0,self.num_of_splits,1)
+        else:
+            worker_id = worker_info.id
+            num_workers = worker_info.num_workers
+            it = range(worker_id, self.num_of_splits, num_workers)
+        
+        for idx in it:
+            b = np.load('data/pre_pov/boards_%s_%d.npy'%(self.mode,idx))
+            m = np.load('data/pre_pov/moves_%s_%d.npy'%(self.mode,idx))
+
+            for j in range(len(b)):
+                yield torch.tensor(b[j], dtype=torch.float) ,torch.tensor(m[j], dtype=torch.long)
+
 class ChessMoveDataset_pre(torch.utils.data.Dataset):
     def __init__(self):
         super(ChessMoveDataset_pre,self).__init__()

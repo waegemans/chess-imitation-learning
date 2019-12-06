@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-batches_per_epoch = 29353
+batches_per_epoch = 22794
 
 def smooth_exp(x):
   y = np.zeros_like(x, dtype=np.float)
@@ -13,13 +13,13 @@ def smooth_exp(x):
       y[i] = 0.9*y[i-1]+0.1*xi
   return y
 
-def smooth_window(x,size=101):
-  y = np.convolve(x,np.ones(size),'same')
+def smooth_window(x,lab,size=51):
+  y = np.convolve(x,np.ones(size),'valid')
   n = size//2
-  y[:n] /= size - np.arange(n,0,-1)
-  y[-n:] /= size - np.arange(1,n+1)
-  y[n:-n] /= size
-  return y
+  return y/size,lab[n:-n]
+
+def smooth(x):
+  return smooth_exp(x)
 
 data = pd.read_csv('output/tmp.csv')
 vdata = data.dropna()
@@ -33,12 +33,16 @@ ax[0].plot(vdata['batch_count'],vdata['val_cross_entropy_loss'], color='orange',
 ax[1].plot(data['batch_count'],data['train_acc'], color='blue', alpha=0.1)
 ax[1].plot(vdata['batch_count'],vdata['val_acc'], color='orange', alpha=0.1)
 
-ax[0].plot(data['batch_count'],smooth_window(data['train_cross_entropy_loss']),label='Train Cross entropy', color='blue')
-ax[0].plot(vdata['batch_count'],smooth_window(vdata['val_cross_entropy_loss']),label='Val Cross entropy', color='orange')
+x,y = smooth_window(data['train_cross_entropy_loss'],data['batch_count'])
+ax[0].plot(y,x,label='Train Cross entropy', color='blue')
+x,y = smooth_window(vdata['train_cross_entropy_loss'],vdata['batch_count'])
+ax[0].plot(y,x,label='Val Cross entropy', color='orange')
 
 
-ax[1].plot(data['batch_count'],smooth_window(data['train_acc']),label='Training acc', color='blue')
-ax[1].plot(vdata['batch_count'],smooth_window(vdata['val_acc']),label='Validation acc', color='orange')
+x,y = smooth_window(data['train_acc'],data['batch_count'])
+ax[1].plot(y,x,label='Training acc', color='blue')
+x,y = smooth_window(vdata['train_acc'],vdata['batch_count'])
+ax[1].plot(y,x,label='Validation acc', color='orange')
 
 for x in range(0,data['batch_count'].values[-1]+batches_per_epoch,batches_per_epoch):
   ax[0].axvline(x=x, ymin=0.0, ymax=1.0, color='r', alpha=0.1)
