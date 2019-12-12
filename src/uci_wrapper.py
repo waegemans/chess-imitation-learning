@@ -5,7 +5,7 @@ from multiprocessing import Pool
 
 
 board = chess.Board()
-model = torch.load("output/model_ep7.nn")
+model = torch.load("output/model_ep4.nn")
 model.eval()
 
 def uci():

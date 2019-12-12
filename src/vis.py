@@ -35,13 +35,13 @@ ax[1].plot(vdata['batch_count'],vdata['val_acc'], color='orange', alpha=0.1)
 
 x,y = smooth_window(data['train_cross_entropy_loss'],data['batch_count'])
 ax[0].plot(y,x,label='Train Cross entropy', color='blue')
-x,y = smooth_window(vdata['train_cross_entropy_loss'],vdata['batch_count'])
+x,y = smooth_window(vdata['val_cross_entropy_loss'],vdata['batch_count'])
 ax[0].plot(y,x,label='Val Cross entropy', color='orange')
 
 
 x,y = smooth_window(data['train_acc'],data['batch_count'])
 ax[1].plot(y,x,label='Training acc', color='blue')
-x,y = smooth_window(vdata['train_acc'],vdata['batch_count'])
+x,y = smooth_window(vdata['val_acc'],vdata['batch_count'])
 ax[1].plot(y,x,label='Validation acc', color='orange')
 
 for x in range(0,data['batch_count'].values[-1]+batches_per_epoch,batches_per_epoch):

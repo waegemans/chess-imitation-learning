@@ -28,6 +28,37 @@ class ssf_asf_1024_1024(nn.Module):
 
   def forward(self, state):
     return self.net(state)
+ 
+class ssf_asf_1024_1024_1024(nn.Module):
+  def __init__(self):
+    super(ssf_asf_1024_1024_1024,self).__init__()
+    self.net = nn.Sequential(
+		  nn.Linear(773,1024),
+		  nn.ReLU(),
+		  nn.Linear(1024,1024),
+		  nn.ReLU(),
+		  nn.Linear(1024,1024),
+		  nn.ReLU(),
+		  nn.Linear(1024,4096)
+		)
+
+  def forward(self, state):
+    return self.net(state)
+
+
+class ssf_asf_2048_2048(nn.Module):
+  def __init__(self):
+    super(ssf_asf_2048_2048,self).__init__()
+    self.net = nn.Sequential(
+		  nn.Linear(773,2048),
+		  nn.ReLU(),
+		  nn.Linear(2048,2048),
+		  nn.ReLU(),
+		  nn.Linear(2048,4096)
+		)
+
+  def forward(self, state):
+    return self.net(state)
     
     
 class ssf_asf_512_512(nn.Module):

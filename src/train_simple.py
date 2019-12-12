@@ -1,4 +1,4 @@
-from models import ssf_asf_1024_1024, ssf_asf_512_512, ssf_asf_512_512_512
+from models import ssf_asf_2048_2048
 from dataset import ChessMoveDataset_pre_it_pov
 import numpy as np
 import torch
@@ -17,17 +17,17 @@ def init_weights(m):
     torch.nn.init.xavier_normal_(m.weight)
     m.bias.data.fill_(0.01)
 
-epochs = 10
+epochs = 20
 batch_size = 1<<10
 random_subset = None
 
 log_file = open("output/out.csv", "w")
 
-model = ssf_asf_1024_1024()
+model = ssf_asf_2048_2048()
 #model = ssf_asf_512_512_512()
 model.apply(init_weights)
 
-optimizer = optim.Adam(model.parameters(), lr=1e-3, betas=(0.99,0.999))
+optimizer = optim.Adam(model.parameters(), lr=1e-3)
 scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.1, patience=0, verbose=True, threshold=1e-2)
 
 
