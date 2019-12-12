@@ -17,7 +17,7 @@ def push_uci_queen(board,uci):
         #print("Defaulting to queen promotion")
         board.push_uci(uci+'q')
 
-model = torch.load('output/model_ep14.nn')
+model = torch.load('output/model_ep7.nn')
 model.eval()
 
 board = chess.Board()
@@ -39,7 +39,7 @@ while move < 900:
       f.write(svg)
   color = board.turn
   if color == player_color:
-      #mv = engine.play(board, limit=chess.engine.Limit(depth=0))
+      #mv = engine.play(board, limit=chess.engine.Limit(time=0.05))
       #board.push(mv.move)
       board.push(np.random.choice(list(board.legal_moves),1)[0])
       continue

@@ -79,3 +79,12 @@ def movelist_to_actionmask(movelist):
   for mv in movelist:
     res[mv.from_square, mv.to_square] = 1
   return res.reshape(-1) 
+
+def flip_uci(uci):
+    uci_flipped = ""
+    for c in uci:
+        if c.isdigit():
+            uci_flipped = uci_flipped + str(9-(ord(c)-ord('0')))
+        else:
+            uci_flipped = uci_flipped + c
+    return uci_flipped

@@ -27,7 +27,7 @@ def push_uci_queen(board,uci):
         #print("Defaulting to queen promotion")
         board.push_uci(uci+'q')
 
-for e in range(epochs):
+for e in range(7,8,1):#epochs):
     print("Epoch %d of %d"%(e,epochs))
     model = torch.load('output/model_ep%d.nn'%e)
     model.eval()
@@ -39,6 +39,8 @@ for e in range(epochs):
             board = chess.Board()
 
             while not board.is_game_over():
+                if not board.turn:
+                    board = board.mirror()
                 color = board.turn
                 state = data_util.board_to_state(board)
                 y = model(torch.tensor(state,dtype=torch.float).unsqueeze(0))[0]
