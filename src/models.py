@@ -73,6 +73,10 @@ class ssf_asf_2048_res(nn.Module):
 
       fc_res_block(2048),
 
+      fc_res_block(2048),
+
+      fc_res_block(2048),
+
 		  nn.Linear(2048,4096)
 		)
 
