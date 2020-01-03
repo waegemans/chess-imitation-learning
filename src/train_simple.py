@@ -27,6 +27,7 @@ log_file = open("output/out.csv", "w")
 model = ssf_asf_2048_res()
 #model = ssf_asf_512_512_512()
 model.apply(init_weights)
+model.to(device)
 
 optimizer = optim.Adam(model.parameters(), lr=1e-3)
 scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.1, patience=0, verbose=True, threshold=1e-2)
@@ -54,9 +55,9 @@ def validate_batch():
   model.eval()
   predicted = model(x)
   val_loss = nn.functional.cross_entropy(predicted, y,reduction='mean')
-  val_acc = (predicted.detach().argmax(dim=1) == y).numpy().mean()
+  val_acc = (predicted.detach().argmax(dim=1) == y).cpu().numpy().mean()
 
-  return val_loss.detach().data.numpy(), val_acc
+  return val_loss.detach().data.cpu().numpy(), val_acc
 
 
 def train():
@@ -72,7 +73,7 @@ def train():
     train_loss.backward()
     optimizer.step()
 
-    train_acc = (predicted.detach().argmax(dim=1) == y).numpy().mean()
+    train_acc = (predicted.detach().argmax(dim=1) == y).cpu().numpy().mean()
 
     val_loss = ''
     val_acc = ''
@@ -80,7 +81,7 @@ def train():
     if (total_batch_count % 10 == 0):
       val_loss,val_acc = validate_batch()
 
-    log_file.write(','.join(map(str,[e,total_batch_count, train_loss.detach().data.numpy(), val_loss, train_acc, val_acc]))+'\n')
+    log_file.write(','.join(map(str,[e,total_batch_count, train_loss.detach().data.cpu().numpy(), val_loss, train_acc, val_acc]))+'\n')
     log_file.flush()
 
     total_batch_count += 1
