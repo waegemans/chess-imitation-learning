@@ -5,6 +5,7 @@ import numpy as np
 
 class fc_res_block(nn.Module):
     def __init__(self, hidden_size):
+        super(fc_res_block,self).__init__()
         self.block = nn.Sequential(
             nn.Linear(hidden_size, hidden_size),
             nn.ReLU(),
@@ -13,7 +14,7 @@ class fc_res_block(nn.Module):
         
     def forward(self, x):
         out = self.block(x)
-        return nn.functional.ReLU(out+x)
+        return nn.functional.relu(out+x)
 
 class ssf_asf_1024_1024(nn.Module):
   def __init__(self):
@@ -59,6 +60,25 @@ class ssf_asf_2048_2048(nn.Module):
 
   def forward(self, state):
     return self.net(state)
+
+
+class ssf_asf_2048_res(nn.Module):
+  def __init__(self):
+    super(ssf_asf_2048_res,self).__init__()
+    self.net = nn.Sequential(
+		  nn.Linear(773,2048),
+		  nn.ReLU(),
+
+      fc_res_block(2048),
+
+      fc_res_block(2048),
+
+		  nn.Linear(2048,4096)
+		)
+
+  def forward(self, state):
+    return self.net(state)
+
     
     
 class ssf_asf_512_512(nn.Module):

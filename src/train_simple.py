@@ -1,4 +1,4 @@
-from models import ssf_asf_2048_2048
+from models import ssf_asf_2048_res
 from dataset import ChessMoveDataset_pre_it_pov
 import numpy as np
 import torch
@@ -17,13 +17,14 @@ def init_weights(m):
     torch.nn.init.xavier_normal_(m.weight)
     m.bias.data.fill_(0.01)
 
+device = ('cuda:0' if torch.cuda.is_available() and torch.cuda.device_count() > 0 else 'cpu')
 epochs = 20
 batch_size = 1<<10
 random_subset = None
 
 log_file = open("output/out.csv", "w")
 
-model = ssf_asf_2048_2048()
+model = ssf_asf_2048_res()
 #model = ssf_asf_512_512_512()
 model.apply(init_weights)
 
@@ -48,6 +49,8 @@ def validate_batch():
   except:
     val_iter = iter(val_loader)
     x,y = next(val_iter)
+  
+  x,y = x.to(device),y.to(device)
   model.eval()
   predicted = model(x)
   val_loss = nn.functional.cross_entropy(predicted, y,reduction='mean')
@@ -59,6 +62,7 @@ def validate_batch():
 def train():
   global total_batch_count
   for x,y in progressbar.progressbar(train_loader,0,int(25930826*0.9/batch_size)+10):
+    x,y = x.to(device),y.to(device)
     model.train()
     optimizer.zero_grad()
     #x,y = x.type(torch.float), y.type(torch.float)
@@ -85,6 +89,7 @@ def validate():
   samples = 0
   loss = 0
   for x,y in progressbar.progressbar(val_loader):
+    x,y = x.to(device),y.to(device)
     model.eval()
     predicted = model(x).detach()
     loss += nn.functional.cross_entropy(predicted, y,reduction='sum')

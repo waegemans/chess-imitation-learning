@@ -16,7 +16,10 @@ def smooth_exp(x):
 def smooth_window(x,lab,size=51):
   y = np.convolve(x,np.ones(size),'valid')
   n = size//2
-  return y/size,lab[n:-n]
+  if len(x) > size:
+    return y/size,lab[n:-n]
+  else:
+    return [],[]
 
 def smooth(x):
   return smooth_exp(x)
