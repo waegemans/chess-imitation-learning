@@ -30,7 +30,7 @@ model.apply(init_weights)
 model.to(device)
 
 optimizer = optim.Adam(model.parameters(), lr=1e-3)
-scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.1, patience=0, verbose=True, threshold=1e-2)
+scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.67, patience=0, verbose=True, threshold=1e-2)
 
 
 trainset,valset = ChessMoveDataset_pre_it_pov(),ChessMoveDataset_pre_it_pov(mode='val')
@@ -38,9 +38,13 @@ trainset,valset = ChessMoveDataset_pre_it_pov(),ChessMoveDataset_pre_it_pov(mode
 train_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=False, num_workers=8, drop_last=True)
 val_loader = torch.utils.data.DataLoader(valset, batch_size=batch_size, shuffle=False)
 val_iter = iter(val_loader)
-log_file.write("epoch,batch_count,train_cross_entropy_loss,val_cross_entropy_loss,train_acc,val_acc\n")
+log_file.write("epoch,batch_count,train_cross_entropy_loss,val_cross_entropy_loss,train_acc,val_acc,train_grads\n")
 
 total_batch_count = 0
+
+def sum_grads(model):
+  train_params = filter(lambda p: p.requires_grad, model.parameters())
+  return sum(ti.grad.detach().cpu().sum().numpy() for ti in train_params)
 
 def validate_batch():
   global val_iter
@@ -71,6 +75,7 @@ def train():
     predicted = model(x)
     train_loss = nn.functional.cross_entropy(predicted, y,reduction='mean')
     train_loss.backward()
+    train_grad = sum_grads(model)
     optimizer.step()
 
     train_acc = (predicted.detach().argmax(dim=1) == y).cpu().numpy().mean()
@@ -81,7 +86,7 @@ def train():
     if (total_batch_count % 10 == 0):
       val_loss,val_acc = validate_batch()
 
-    log_file.write(','.join(map(str,[e,total_batch_count, train_loss.detach().data.cpu().numpy(), val_loss, train_acc, val_acc]))+'\n')
+    log_file.write(','.join(map(str,[e,total_batch_count, train_loss.detach().data.cpu().numpy(), val_loss, train_acc, val_acc, train_grad]))+'\n')
     log_file.flush()
 
     total_batch_count += 1

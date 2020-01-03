@@ -66,18 +66,18 @@ class ssf_asf_2048_res(nn.Module):
   def __init__(self):
     super(ssf_asf_2048_res,self).__init__()
     self.net = nn.Sequential(
-		  nn.Linear(773,2048),
+		  nn.Linear(773,4096),
 		  nn.ReLU(),
 
-      fc_res_block(2048),
+      fc_res_block(4096),
 
-      fc_res_block(2048),
+      fc_res_block(4096),
 
-      fc_res_block(2048),
+      fc_res_block(4096),
 
-      fc_res_block(2048),
+      fc_res_block(4096),
 
-		  nn.Linear(2048,4096)
+		  nn.Linear(4096,4096)
 		)
 
   def forward(self, state):
