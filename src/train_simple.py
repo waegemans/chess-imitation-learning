@@ -1,4 +1,4 @@
-from models import ssf_asf_2048_res
+import models
 from dataset import ChessMoveDataset_pre_it_pov
 import numpy as np
 import torch
@@ -7,6 +7,8 @@ import torch.optim as optim
 import sys
 import progressbar
 import data_util
+import git
+import os
 
 import chess
 import chess.engine
@@ -22,10 +24,14 @@ epochs = 20
 batch_size = 1<<10
 random_subset = None
 
-log_file = open("output/out.csv", "w")
+githash = git.Repo(search_parent_directories=True).head.object.hexsha
+log_dir = "output/" + githash + "/"
 
-model = ssf_asf_2048_res()
-#model = ssf_asf_512_512_512()
+os.mkdir(log_dir)
+
+log_file = open(log_dir+"out.csv", "w")
+
+model = models.ssf_asf_res()
 model.apply(init_weights)
 model.to(device)
 
@@ -103,7 +109,7 @@ def validate():
   return (loss/samples)
 
 for e in range(epochs):
-  torch.save(model, 'output/model_ep%d.nn'%e)
+  torch.save(model, log_dir+'model_ep%d.nn'%e)
   print ("Epoch %d of %d:"%(e,epochs))
 
   train()
