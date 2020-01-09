@@ -55,6 +55,7 @@ ax[2].plot(y,x,label='Training grads', color='blue')
 for x in range(0,data['batch_count'].values[-1],batches_per_epoch):
   ax[0].axvline(x=x, ymin=0.0, ymax=1.0, color='r', alpha=0.1)
   ax[1].axvline(x=x, ymin=0.0, ymax=1.0, color='r', alpha=0.1)
+  ax[2].axvline(x=x, ymin=0.0, ymax=1.0, color='r', alpha=0.1)
 
 ax[1].legend()
 ax[0].legend()

@@ -17,6 +17,13 @@ def board_to_state(board):
   res[772] = board.turn
   return res
 
+def state_to_cnn(state):
+  res = np.zeros((17,8,8), np.float)
+  res[:12,:,:] = state[:768].reshape((12,8,8))
+  for i in range(5):
+    res[12+i,:,:] += state[768+i]
+  return res
+
 def state_to_board(state):
   board = chess.Board()
   grid = np.array(state[:768].reshape(12,64))

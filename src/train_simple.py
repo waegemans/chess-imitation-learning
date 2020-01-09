@@ -1,5 +1,5 @@
 import models
-from dataset import ChessMoveDataset_pre_it_pov
+from dataset import ChessMoveDataset_pre_it_pov_cnn
 import numpy as np
 import torch
 import torch.nn as nn
@@ -18,9 +18,12 @@ def init_weights(m):
   if type(m) == nn.Linear:
     torch.nn.init.xavier_normal_(m.weight)
     m.bias.data.fill_(0.01)
+  if type(m) == nn.Conv2d:
+    torch.nn.init.xavier_normal_(m.weight,.1)
+    m.bias.data.fill_(0.01)
 
 device = ('cuda:0' if torch.cuda.is_available() and torch.cuda.device_count() > 0 else 'cpu')
-epochs = 20
+epochs = 100
 batch_size = 1<<10
 random_subset = None
 
@@ -31,7 +34,7 @@ os.mkdir(log_dir)
 
 log_file = open(log_dir+"out.csv", "w")
 
-model = models.small()
+model = models.cnn_simple()
 model.apply(init_weights)
 model.to(device)
 
@@ -39,7 +42,7 @@ optimizer = optim.SGD(model.parameters(), lr=1e-2, momentum=.9)
 scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.67, patience=0, verbose=True, threshold=1e-2)
 
 
-trainset,valset = ChessMoveDataset_pre_it_pov(),ChessMoveDataset_pre_it_pov(mode='val')
+trainset,valset = ChessMoveDataset_pre_it_pov_cnn(),ChessMoveDataset_pre_it_pov_cnn(mode='val')
 
 train_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=False, num_workers=8, drop_last=True)
 val_loader = torch.utils.data.DataLoader(valset, batch_size=batch_size, shuffle=False)
@@ -74,7 +77,7 @@ def validate_batch():
 def train():
   global total_batch_count
   global running_train_loss
-  for x,y in progressbar.progressbar(train_loader,0,int(25930826*0.9/batch_size)+10):
+  for x,y in progressbar.progressbar(train_loader,0,22794):
     x,y = x.to(device),y.to(device)
     model.train()
     optimizer.zero_grad()
