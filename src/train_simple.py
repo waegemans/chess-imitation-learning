@@ -47,6 +47,7 @@ val_iter = iter(val_loader)
 log_file.write("epoch,batch_count,train_cross_entropy_loss,val_cross_entropy_loss,train_acc,val_acc,train_grads\n")
 
 total_batch_count = 0
+running_train_loss = 0
 
 def sum_grads(model):
   train_params = filter(lambda p: p.requires_grad, model.parameters())
@@ -72,6 +73,7 @@ def validate_batch():
 
 def train():
   global total_batch_count
+  global running_train_loss
   for x,y in progressbar.progressbar(train_loader,0,int(25930826*0.9/batch_size)+10):
     x,y = x.to(device),y.to(device)
     model.train()
@@ -96,6 +98,7 @@ def train():
     log_file.flush()
 
     total_batch_count += 1
+    running_train_loss = running_train_loss*0.9 + train_loss.detach().data.cpu().numpy()*0.1
     
     if total_batch_count%30 == 0:
       return
@@ -116,10 +119,11 @@ for e in range(epochs):
   print ("Epoch %d of %d:"%(e,epochs))
 
   train()
-  val_loss = validate()
-  print(val_loss)
+  #val_loss = validate()
+  #print(val_loss)
+  print(running_train_loss)
 
-  scheduler.step(val_loss)
+  scheduler.step(running_train_loss)
 
 torch.save(model, 'output/model_ep%d.nn'%epochs)
 
