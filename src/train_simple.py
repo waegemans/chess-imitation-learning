@@ -35,7 +35,7 @@ model = models.ssf_asf_res()
 model.apply(init_weights)
 model.to(device)
 
-optimizer = optim.SDG(model.parameters(), lr=1e-3, momentum=.9)
+optimizer = optim.SGD(model.parameters(), lr=1e-3, momentum=.9)
 scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.67, patience=0, verbose=True, threshold=1e-2)
 
 
