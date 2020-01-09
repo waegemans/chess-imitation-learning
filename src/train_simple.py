@@ -35,8 +35,8 @@ model = models.ssf_asf_res()
 model.apply(init_weights)
 model.to(device)
 
-optimizer = optim.SGD(model.parameters(), lr=1e-3, momentum=.9)
-scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.67, patience=0, verbose=True, threshold=1e-2)
+optimizer = optim.SGD(model.parameters(), lr=1e-2, momentum=.9)
+scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.67, patience=4, verbose=True, threshold=1e-2)
 
 
 trainset,valset = ChessMoveDataset_pre_it_pov(),ChessMoveDataset_pre_it_pov(mode='val')
