@@ -31,7 +31,7 @@ os.mkdir(log_dir)
 
 log_file = open(log_dir+"out.csv", "w")
 
-model = models.ssf_asf_res()
+model = models.small()
 model.apply(init_weights)
 model.to(device)
 
