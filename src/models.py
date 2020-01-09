@@ -23,12 +23,6 @@ def small():
 
     fc_res_block(512),
 
-    fc_res_block(512),
-
-    fc_res_block(512),
-
-    fc_res_block(512),
-
     nn.Linear(512,4096)
 	)
 def ssf_asf_res():

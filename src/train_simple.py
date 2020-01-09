@@ -47,7 +47,7 @@ val_iter = iter(val_loader)
 log_file.write("epoch,batch_count,train_cross_entropy_loss,val_cross_entropy_loss,train_acc,val_acc,train_grads\n")
 
 total_batch_count = 0
-running_train_loss = 0
+running_train_loss = None
 
 def sum_grads(model):
   train_params = filter(lambda p: p.requires_grad, model.parameters())
@@ -98,6 +98,8 @@ def train():
     log_file.flush()
 
     total_batch_count += 1
+    if running_train_loss is None:
+      running_train_loss = train_loss.detach().data.cpu().numpy()
     running_train_loss = running_train_loss*0.9 + train_loss.detach().data.cpu().numpy()*0.1
     
     if total_batch_count%30 == 0:
