@@ -16,6 +16,21 @@ class fc_res_block(nn.Module):
         out = self.block(x)
         return nn.functional.relu(out+x)
 
+def small():
+  return nn.Sequential(
+    nn.Linear(773,512),
+    nn.ReLU(),
+
+    fc_res_block(512),
+
+    fc_res_block(512),
+
+    fc_res_block(512),
+
+    fc_res_block(512),
+
+    nn.Linear(512,4096)
+	)
 def ssf_asf_res():
   return nn.Sequential(
     nn.Linear(773,8192),

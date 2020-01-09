@@ -35,7 +35,7 @@ model = models.ssf_asf_res()
 model.apply(init_weights)
 model.to(device)
 
-optimizer = optim.Adam(model.parameters(), lr=1e-3)
+optimizer = optim.SDG(model.parameters(), lr=1e-3, momentum=.9)
 scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.67, patience=0, verbose=True, threshold=1e-2)
 
 
@@ -96,6 +96,9 @@ def train():
     log_file.flush()
 
     total_batch_count += 1
+    
+    if total_batch_count%30 == 0:
+      return
 
 def validate():
   samples = 0
