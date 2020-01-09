@@ -36,7 +36,7 @@ model.apply(init_weights)
 model.to(device)
 
 optimizer = optim.SGD(model.parameters(), lr=1e-2, momentum=.9)
-scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.67, patience=4, verbose=True, threshold=1e-2)
+scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.67, patience=0, verbose=True, threshold=1e-2)
 
 
 trainset,valset = ChessMoveDataset_pre_it_pov(),ChessMoveDataset_pre_it_pov(mode='val')
@@ -102,8 +102,6 @@ def train():
       running_train_loss = train_loss.detach().data.cpu().numpy()
     running_train_loss = running_train_loss*0.9 + train_loss.detach().data.cpu().numpy()*0.1
     
-    if total_batch_count%30 == 0:
-      return
 
 def validate():
   samples = 0
