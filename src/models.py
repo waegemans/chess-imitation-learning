@@ -20,13 +20,13 @@ class cnn_simple(nn.Module):
     def __init__(self):
         super(cnn_simple,self).__init__()
         self.model = nn.Sequential(
-          nn.Conv2d(17,256,kernel_size=5,padding=2),
+          nn.Conv2d(17,512,kernel_size=5,padding=2),
           nn.ReLU(),
-          #nn.Conv2d(256,256,kernel_size=5,padding=2),
-          #nn.ReLU(),
-          #nn.Conv2d(256,256,kernel_size=5,padding=2),
-          #nn.ReLU(),
-          nn.Conv2d(256,64,kernel_size=5,padding=2)
+          nn.Conv2d(512,512,kernel_size=5,padding=2),
+          nn.ReLU(),
+          nn.Conv2d(512,512,kernel_size=5,padding=2),
+          nn.ReLU(),
+          nn.Conv2d(512,64,kernel_size=5,padding=2)
         )
     def forward(self, x):
       out = self.model(x)
