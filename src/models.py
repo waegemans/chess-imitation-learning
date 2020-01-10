@@ -16,16 +16,29 @@ class fc_res_block(nn.Module):
         out = self.block(x)
         return nn.functional.relu(out+x)
 
+class cnn_res_block(nn.Module):
+    def __init__(self, hidden_channels):
+        super(cnn_res_block, self).__init__()
+        self.block = nn.Sequential(
+            nn.Conv2d(hidden_channels, hidden_channels, kernel_size=5, padding=2),
+            nn.ReLU(),
+            nn.Conv2d(hidden_channels, hidden_channels, kernel_size=5, padding=2)
+        )
+    
+    def forward(self, x):
+        out = self.block(x)
+        return nn.functional.relu(out+x)
+
 class cnn_simple(nn.Module):
     def __init__(self):
         super(cnn_simple,self).__init__()
         self.model = nn.Sequential(
           nn.Conv2d(17,512,kernel_size=5,padding=2),
           nn.ReLU(),
-          nn.Conv2d(512,512,kernel_size=5,padding=2),
-          nn.ReLU(),
-          nn.Conv2d(512,512,kernel_size=5,padding=2),
-          nn.ReLU(),
+          
+          cnn_res_block(512),
+          cnn_res_block(512),
+          
           nn.Conv2d(512,64,kernel_size=5,padding=2)
         )
     def forward(self, x):
