@@ -17,12 +17,14 @@ class fc_res_block(nn.Module):
         return nn.functional.relu(out+x)
 
 class cnn_res_block(nn.Module):
-    def __init__(self, hidden_channels):
+    def __init__(self, hidden_channels, kernel_size):
         super(cnn_res_block, self).__init__()
         self.block = nn.Sequential(
-            nn.Conv2d(hidden_channels, hidden_channels, kernel_size=5, padding=2),
+            nn.Conv2d(hidden_channels, hidden_channels, kernel_size=kernel_size, padding=kernel_size//2),
+            nn.BatchNorm2d(hidden_channels),
             nn.ReLU(),
-            nn.Conv2d(hidden_channels, hidden_channels, kernel_size=5, padding=2)
+            nn.Conv2d(hidden_channels, hidden_channels, kernel_size=kernel_size, padding=kernel_size//2),
+            nn.BatchNorm2d(hidden_channels)
         )
     
     def forward(self, x):
@@ -34,12 +36,49 @@ class cnn_simple(nn.Module):
         super(cnn_simple,self).__init__()
         self.model = nn.Sequential(
           nn.Conv2d(17,512,kernel_size=5,padding=2),
+          nn.BatchNorm2d(512),
           nn.ReLU(),
           
-          cnn_res_block(512),
-          cnn_res_block(512),
+          cnn_res_block(512,kernel_size=5),
+          cnn_res_block(512,kernel_size=5),
           
           nn.Conv2d(512,64,kernel_size=5,padding=2)
+        )
+    def forward(self, x):
+      out = self.model(x)
+      return out.reshape((out.shape[0],-1))
+
+class cnn_alpha(nn.Module):
+    def __init__(self):
+        super(cnn_alpha,self).__init__()
+        self.model = nn.Sequential(
+          nn.Conv2d(17,256,kernel_size=3,padding=1),
+          nn.BatchNorm2d(256),
+          nn.ReLU(),
+          
+          cnn_res_block(256,kernel_size=3),
+          cnn_res_block(256,kernel_size=3),
+          cnn_res_block(256,kernel_size=3),
+          cnn_res_block(256,kernel_size=3),
+          cnn_res_block(256,kernel_size=3),
+          cnn_res_block(256,kernel_size=3),
+          cnn_res_block(256,kernel_size=3),
+          cnn_res_block(256,kernel_size=3),
+          cnn_res_block(256,kernel_size=3),
+          cnn_res_block(256,kernel_size=3),
+          cnn_res_block(256,kernel_size=3),
+          cnn_res_block(256,kernel_size=3),
+          cnn_res_block(256,kernel_size=3),
+          cnn_res_block(256,kernel_size=3),
+          cnn_res_block(256,kernel_size=3),
+          cnn_res_block(256,kernel_size=3),
+          cnn_res_block(256,kernel_size=3),
+          cnn_res_block(256,kernel_size=3),
+          
+          nn.Conv2d(256,256,kernel_size=3,padding=1),
+          nn.BatchNorm2d(256),
+          nn.ReLU(),
+          nn.Conv2d(256,64,kernel_size=1)
         )
     def forward(self, x):
       out = self.model(x)

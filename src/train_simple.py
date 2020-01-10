@@ -16,10 +16,10 @@ import chess.engine
 
 def init_weights(m):
   if type(m) == nn.Linear:
-    torch.nn.init.xavier_normal_(m.weight)
+    torch.nn.init.xavier_normal_(m.weight,2**0.5)
     m.bias.data.fill_(0.01)
   if type(m) == nn.Conv2d:
-    torch.nn.init.xavier_normal_(m.weight,.1)
+    torch.nn.init.xavier_normal_(m.weight,2**0.5)
     m.bias.data.fill_(0.01)
 
 device = ('cuda:0' if torch.cuda.is_available() and torch.cuda.device_count() > 0 else 'cpu')
