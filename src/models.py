@@ -30,6 +30,22 @@ class cnn_res_block(nn.Module):
     def forward(self, x):
         out = self.block(x)
         return nn.functional.relu(out+x)
+class cnn_bare(nn.Module):
+    def __init__(self):
+        super(cnn_bare,self).__init__()
+        self.model = nn.Sequential(
+          nn.Conv2d(17,128,kernel_size=3,padding=1),
+          nn.BatchNorm2d(128),
+          nn.ReLU(),
+          
+          cnn_res_block(128,kernel_size=3),
+          cnn_res_block(128,kernel_size=3),
+          
+          nn.Conv2d(128,64,kernel_size=3,padding=1)
+        )
+    def forward(self, x):
+      out = self.model(x)
+      return out.reshape((out.shape[0],-1))
 
 class cnn_simple(nn.Module):
     def __init__(self):

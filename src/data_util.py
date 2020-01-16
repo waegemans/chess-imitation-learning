@@ -91,6 +91,8 @@ def cpdict_to_loss_mask(cpdict):
   cp_loss = np.zeros((64,64), np.float)
   mask = np.zeros((64,64), np.float)
   max_cp = max(cpdict.values())
+  min_cp = min(cpdict.values())
+  cp_loss += min_cp - max_cp
   for uci,cp in cpdict.items():
     mv = chess.Move.from_uci(uci)
     mask[mv.from_square, mv.to_square] = 1

@@ -32,17 +32,19 @@ class ChessMoveDataset_cp(torch.utils.data.Dataset):
         with open("data/depth18_gamma1/moves.csv", "r") as csv_file:
             r = csv.reader(csv_file)
             data = []
-            for fen,dstr in r:
-                data.append((fen,ast.literal_eval(dstr)))
+            for fen_without_count,dstr in r:
+                cpdict = ast.literal_eval(dstr)
+                fen = fen_without_count + " 0 1"
+                state = data_util.board_to_state(chess.Board(fen=fen))
+                cnn = data_util.state_to_cnn(state)
+                cp_loss,mask = data_util.cpdict_to_loss_mask(cpdict)
+                data.append((cnn,cp_loss,mask))
             self.data = np.array(data)
 
     def __getitem__(self, idx):
-        fen_without_count,cpdict = self.data[idx]
-        fen = fen_without_count + " 0 1"
-        state = data_util.board_to_state(chess.Board(fen=fen))
-        cp_loss,mask = data_util.cpdict_to_loss_mask(cpdict)
+        cnn,cp_loss,mask = self.data[idx]
 
-        return torch.tensor(state, dtype=torch.float), torch.tensor(cp_loss, dtype=torch.float), torch.tensor(mask, dtype=torch.float)
+        return torch.tensor(cnn, dtype=torch.float), torch.tensor(cp_loss, dtype=torch.float), torch.tensor(mask, dtype=torch.float)
 
     def __len__(self):
         return len(self.data)
