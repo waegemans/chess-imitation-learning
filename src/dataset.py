@@ -2,6 +2,7 @@ import numpy as np
 import chess
 import torch
 import csv
+import ast
 
 import data_util
 
@@ -21,6 +22,27 @@ class ChessMoveDataset(torch.utils.data.Dataset):
         b = chess.Board(fen=fen)
         m = chess.Move.from_uci(uci)
         return torch.tensor(data_util.board_to_state(b), dtype=torch.float) ,torch.tensor(data_util.move_to_action(m), dtype=torch.float)
+
+    def __len__(self):
+        return len(self.data)
+
+class ChessMoveDataset_cp(torch.utils.data.Dataset):
+    def __init__(self):
+        super(ChessMoveDataset_cp,self).__init__()
+        with open("data/depth18_gamma1/moves.csv", "r") as csv_file:
+            r = csv.reader(csv_file)
+            data = []
+            for fen,dstr in r:
+                data.append((fen,ast.literal_eval(dstr)))
+            self.data = np.array(data)
+
+    def __getitem__(self, idx):
+        fen_without_count,cpdict = self.data[idx]
+        fen = fen_without_count + " 0 1"
+        state = data_util.board_to_state(chess.Board(fen=fen))
+        cp_loss,mask = data_util.cpdict_to_loss_mask(cpdict)
+
+        return torch.tensor(state, dtype=torch.float), torch.tensor(cp_loss, dtype=torch.float), torch.tensor(mask, dtype=torch.float)
 
     def __len__(self):
         return len(self.data)

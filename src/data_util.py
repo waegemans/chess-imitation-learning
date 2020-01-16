@@ -85,7 +85,17 @@ def movelist_to_actionmask(movelist):
   res = np.zeros((64,64), np.float)
   for mv in movelist:
     res[mv.from_square, mv.to_square] = 1
-  return res.reshape(-1) 
+  return res.reshape(-1)
+
+def cpdict_to_loss_mask(cpdict):
+  cp_loss = np.zeros((64,64), np.float)
+  mask = np.zeros((64,64), np.float)
+  max_cp = max(cpdict.values())
+  for uci,cp in cpdict.items():
+    mv = chess.Move.from_uci(uci)
+    mask[mv.from_square, mv.to_square] = 1
+    cp_loss[mv.from_square, mv.to_square] = cp - max_cp
+  return cp_loss.reshape(-1), mask.reshape(-1)
 
 def flip_uci(uci):
     uci_flipped = ""
