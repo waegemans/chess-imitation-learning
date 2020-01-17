@@ -97,7 +97,7 @@ def cpdict_to_loss_mask(cpdict):
     mv = chess.Move.from_uci(uci)
     mask[mv.from_square, mv.to_square] = 1
     cp_loss[mv.from_square, mv.to_square] = cp - max_cp
-  return cp_loss.reshape(-1), mask.reshape(-1)
+  return (cp_loss/1000).reshape(-1), mask.reshape(-1)
 
 def flip_uci(uci):
     uci_flipped = ""
