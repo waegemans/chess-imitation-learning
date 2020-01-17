@@ -34,7 +34,7 @@ os.mkdir(log_dir)
 
 log_file = open(log_dir+"out.csv", "w")
 
-model = models.cnn_bare()
+model = models.cnn_alpha()
 model.apply(init_weights)
 model.to(device)
 

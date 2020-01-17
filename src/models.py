@@ -30,6 +30,7 @@ class cnn_res_block(nn.Module):
     def forward(self, x):
         out = self.block(x)
         return nn.functional.relu(out+x)
+
 class cnn_bare(nn.Module):
     def __init__(self):
         super(cnn_bare,self).__init__()
