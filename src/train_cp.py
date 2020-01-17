@@ -38,7 +38,7 @@ model = models.cnn_alpha()
 model.apply(init_weights)
 model.to(device)
 
-optimizer = optim.SGD(model.parameters(), lr=1e-3, momentum=.9)
+optimizer = optim.Adam(model.parameters(), lr=1e-3)
 scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.67, patience=3, verbose=True, threshold=1e-2)
 
 ds = ChessMoveDataset_cp()
@@ -134,7 +134,7 @@ for e in range(epochs):
   #print(val_loss)
   print(running_train_loss)
 
-  scheduler.step(running_train_loss)
+  #scheduler.step(running_train_loss)
 
 torch.save(model, 'output/model_ep%d.nn'%epochs)
 
