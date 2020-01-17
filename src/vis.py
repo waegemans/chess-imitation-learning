@@ -30,7 +30,7 @@ vdata = data.dropna()
 fig,ax = plt.subplots(3)
 
 ax[0].plot(data['batch_count'],data['train_cross_entropy_loss'], color='blue', alpha=0.1)
-#ax[0].plot(vdata['batch_count'],vdata['val_cross_entropy_loss'], color='orange', alpha=0.1)
+ax[0].plot(vdata['batch_count'],vdata['val_cross_entropy_loss'], color='orange', alpha=0.1)
 
 
 ax[1].plot(data['batch_count'],data['train_acc'], color='blue', alpha=0.1)
@@ -39,7 +39,7 @@ ax[1].plot(vdata['batch_count'],vdata['val_acc'], color='orange', alpha=0.1)
 x,y = smooth_window(data['train_cross_entropy_loss'],data['batch_count'])
 ax[0].plot(y,x,label='Train Cross entropy', color='blue')
 x,y = smooth_window(vdata['val_cross_entropy_loss'],vdata['batch_count'])
-#ax[0].plot(y,x,label='Val Cross entropy', color='orange')
+ax[0].plot(y,x,label='Val Cross entropy', color='orange')
 
 
 x,y = smooth_window(data['train_acc'],data['batch_count'])
