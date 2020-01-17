@@ -24,7 +24,7 @@ def init_weights(m):
 
 device = ('cuda:0' if torch.cuda.is_available() and torch.cuda.device_count() > 0 else 'cpu')
 epochs = 100
-batch_size = 1<<8
+batch_size = 1<<4
 random_subset = None
 
 githash = git.Repo(search_parent_directories=True).head.object.hexsha
@@ -43,7 +43,7 @@ scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.67, patienc
 
 ds = ChessMoveDataset_cp()
 
-valset,trainset = torch.utils.data.random_split(ds,[batch_size*10, len(ds)-10*batch_size])
+valset,trainset,_ = torch.utils.data.random_split(ds,[batch_size*10, batch_size*1, len(ds)-11*batch_size])
 #trainset,valset = ChessMoveDataset_pre_it_pov_cnn(),ChessMoveDataset_pre_it_pov_cnn(mode='val')
 
 train_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=True, num_workers=8, drop_last=True)
@@ -52,9 +52,10 @@ val_iter = iter(val_loader)
 log_file.write("epoch,batch_count,train_cross_entropy_loss,val_cross_entropy_loss,train_acc,val_acc,train_grads\n")
 
 def loss_fcn(predicted, target, mask):
-  mse = nn.functional.mse_loss(torch.flatten(predicted*mask),torch.flatten(target*mask),'sum') / mask.sum()
+  mse = nn.functional.mse_loss(torch.flatten(predicted*mask),torch.flatten(target*mask),reduction='sum') / mask.sum()
   hinge = (nn.functional.relu((predicted-target)*(1-mask))**2).sum() / (1-mask).sum()
-  return mse + hinge
+  cross_entropy = nn.functional.cross_entropy(predicted, target.argmax(dim=1),reduction='mean')
+  return mse + cross_entropy
 
 total_batch_count = 0
 running_train_loss = None
