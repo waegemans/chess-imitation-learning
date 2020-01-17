@@ -43,7 +43,7 @@ scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.67, patienc
 
 ds = ChessMoveDataset_cp()
 
-trainset,valset,_ = torch.utils.data.random_split(ds,[batch_size*10, len(ds)-10*batch_size])
+valset,trainset = torch.utils.data.random_split(ds,[batch_size*10, len(ds)-10*batch_size])
 #trainset,valset = ChessMoveDataset_pre_it_pov_cnn(),ChessMoveDataset_pre_it_pov_cnn(mode='val')
 
 train_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=True, num_workers=8, drop_last=True)
