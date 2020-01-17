@@ -23,7 +23,7 @@ def init_weights(m):
     m.bias.data.fill_(0.01)
 
 device = ('cuda:0' if torch.cuda.is_available() and torch.cuda.device_count() > 0 else 'cpu')
-epochs = 100
+epochs = 1000
 batch_size = 1<<4
 random_subset = None
 
@@ -39,7 +39,7 @@ model.apply(init_weights)
 model.to(device)
 
 optimizer = optim.SGD(model.parameters(), lr=1e-3, momentum=.9)
-scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.67, patience=0, verbose=True, threshold=1e-2)
+scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.67, patience=3, verbose=True, threshold=1e-2)
 
 ds = ChessMoveDataset_cp()
 
