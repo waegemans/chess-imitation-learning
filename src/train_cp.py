@@ -53,7 +53,7 @@ log_file.write("epoch,batch_count,train_cross_entropy_loss,val_cross_entropy_los
 
 def loss_fcn(predicted, target, mask):
   mse = nn.functional.mse_loss(torch.flatten(predicted*mask),torch.flatten(target*mask),'sum') / mask.sum()
-  hinge = (nn.functional.relu((predicted-target)*(1-mask))**2) / (1-mask).sum()
+  hinge = (nn.functional.relu((predicted-target)*(1-mask))**2).sum() / (1-mask).sum()
   return mse + hinge
 
 total_batch_count = 0
