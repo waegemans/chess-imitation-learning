@@ -24,7 +24,7 @@ def init_weights(m):
 
 device = ('cuda:0' if torch.cuda.is_available() and torch.cuda.device_count() > 0 else 'cpu')
 epochs = 1000
-batch_size = 1<<2
+batch_size = 1<<4
 random_subset = None
 
 githash = git.Repo(search_parent_directories=True).head.object.hexsha
@@ -34,12 +34,12 @@ os.mkdir(log_dir)
 
 log_file = open(log_dir+"out.csv", "w")
 
-model = models.cnn_bare()
+model = models.cnn_alpha()
 model.apply(init_weights)
 model.to(device)
 
 optimizer = optim.SGD(model.parameters(), lr=1e-3, momentum=.9)
-scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.67, patience=10, verbose=True, threshold=1e-2)
+scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.67, patience=0, verbose=True, threshold=1e-2)
 
 ds = ChessMoveDataset_cp()
 
@@ -50,6 +50,12 @@ train_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuf
 val_loader = torch.utils.data.DataLoader(valset, batch_size=batch_size, shuffle=False)
 val_iter = iter(val_loader)
 log_file.write("epoch,batch_count,train_cross_entropy_loss,val_cross_entropy_loss,train_acc,val_acc,train_grads\n")
+
+def loss_fcn(predicted, target, mask):
+  mse = nn.functional.mse_loss(torch.flatten(predicted*mask),torch.flatten(target*mask),reduction='sum') / mask.sum()
+  hinge = (nn.functional.relu((predicted-target)*(1-mask))**2).sum() / (1-mask).sum()
+  cross_entropy = nn.functional.cross_entropy(predicted, target.argmax(dim=1),reduction='mean')
+  return mse + hinge
 
 total_batch_count = 0
 running_train_loss = None
@@ -70,7 +76,7 @@ def validate_batch():
   x,c,m = x.to(device),c.to(device),m.to(device)
   model.eval()
   predicted = model(x)
-  val_loss = nn.functional.mse_loss(predicted*m,c*m) + (nn.functional.relu((predicted - c)*(1-m))**2).sum()/(1-m).sum()
+  val_loss = loss_fcn(predicted,c,m)
   val_acc = (predicted.detach().argmax(dim=1) == (c+m).argmax(dim=1)).cpu().numpy().mean()
 
   return val_loss.detach().data.cpu().numpy(), val_acc
@@ -86,7 +92,7 @@ def train():
     #x,y = x.type(torch.float), y.type(torch.float)
 
     predicted = model(x)
-    train_loss = nn.functional.mse_loss(predicted*m,c*m) + (nn.functional.relu((predicted - c)*(1-m))**2).sum()/(1-m).sum()
+    train_loss = loss_fcn(predicted,c,m)
     train_loss.backward()
     train_grad = sum_grads(model)
     optimizer.step()
@@ -115,7 +121,7 @@ def validate():
     x,c,m = x.to(device),c.to(device),m.to(device)
     model.eval()
     predicted = model(x).detach()
-    loss += nn.functional.mse_loss(predicted*m,c*m)
+    loss += loss_fcn(predicted,c,m)
     samples += len(x)
   return (loss/samples)
 

@@ -5,7 +5,7 @@ from multiprocessing import Pool
 
 
 board = chess.Board()
-model = torch.load("output/model_ep4.nn")
+model = torch.load("output/model_ep2.nn",map_location=torch.device('cpu'))
 model.eval()
 
 def uci():
@@ -34,8 +34,9 @@ def go():
     if not board.turn:
         b = board.mirror()
     state = data_util.board_to_state(board)
+    cnn = data_util.state_to_cnn(state)
         
-    y = model(torch.tensor(state,dtype=torch.float)).detach()
+    y = model(torch.tensor(cnn,dtype=torch.float).unsqueeze(0)).detach()
     y = y - y.min()
     y_masked = y.numpy() * data_util.movelist_to_actionmask(b.legal_moves)
     uci = data_util.action_to_uci(y_masked)
