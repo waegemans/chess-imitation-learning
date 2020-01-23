@@ -41,7 +41,9 @@ scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.67, patienc
 
 ds = ChessMoveDataset_cp()
 
-trainset,valset = torch.utils.data.random_split(ds,[len(ds)-2*batch_size,2*batch_size])
+valn = int(len(ds)*0.1)//batch_size * batch_size
+
+trainset,valset = torch.utils.data.random_split(ds,[len(ds)-valn,valn])
 #trainset,valset = ChessMoveDataset_pre_it_pov_cnn(),ChessMoveDataset_pre_it_pov_cnn(mode='val')
 
 train_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=True, num_workers=8, drop_last=True)
@@ -49,11 +51,21 @@ val_loader = torch.utils.data.DataLoader(valset, batch_size=batch_size, shuffle=
 val_iter = iter(val_loader)
 log_file.write("epoch,batch_count,train_cross_entropy_loss,val_cross_entropy_loss,train_acc,val_acc,train_grads\n")
 
+def multi_cross_entropy(predicted, target, mask, topn=5):
+  loss = 0
+  midx = np.argpartition(-target.numpy(),topn)[:,:topn]
+  w = torch.nn.functional.softmax(torch.tensor(np.take_along_axis(target.numpy(),midx,axis=1)), dim=1)
+  for i in range(topn):
+    loss += (w[:,i]* nn.functional.cross_entropy(predicted, torch.tensor(midx[:,i]),reduction='none')).mean()
+  return loss
+
+
+
 def loss_fcn(predicted, target, mask):
-  mse = nn.functional.mse_loss(torch.flatten(predicted*mask),torch.flatten(target*mask),reduction='sum') / mask.sum()
-  hinge = (nn.functional.relu((predicted-target)*(1-mask))**2).sum() / (1-mask).sum()
-  cross_entropy = nn.functional.cross_entropy(predicted, target.argmax(dim=1),reduction='mean')
-  return cross_entropy
+  #mse = nn.functional.mse_loss(torch.flatten(predicted*mask),torch.flatten(target*mask),reduction='sum') / mask.sum()
+  #hinge = (nn.functional.relu((predicted-target)*(1-mask))**2).sum() / (1-mask).sum()
+  #cross_entropy = nn.functional.cross_entropy(predicted, target.argmax(dim=1),reduction='mean')
+  return multi_cross_entropy(predicted, target, mask)
 
 total_batch_count = 0
 running_train_loss = None

@@ -76,9 +76,13 @@ def wuci_to_action(wuci):
 
 def action_to_uci(action):
   idx = action.argmax()
+  return idx_to_uci(idx)
+
+def idx_to_uci(idx):
   from_idx = idx//64
   to_idx = idx%64
   return chess.Move(from_idx, to_idx).uci()
+
 
 
 def movelist_to_actionmask(movelist):
