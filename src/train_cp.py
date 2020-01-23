@@ -56,7 +56,7 @@ def multi_cross_entropy(predicted, target, mask, topn=5):
   midx = np.argpartition(-target.cpu().numpy(),topn)[:,:topn]
   w = torch.nn.functional.softmax(torch.tensor(np.take_along_axis(target.cpu().numpy(),midx,axis=1),device=device), dim=1)
   for i in range(topn):
-    loss += (w[:,i]* nn.functional.cross_entropy(predicted, torch.tensor(midx[:,i]),reduction='none',device=device)).mean()
+    loss += (w[:,i]* nn.functional.cross_entropy(predicted, torch.tensor(midx[:,i],device=device),reduction='none')).mean()
   return loss
 
 
