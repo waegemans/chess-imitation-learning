@@ -30,13 +30,13 @@ log_file = open(log_dir+"out.csv", "w")
 model = torch.load("output/0ab90067a02d8eb69c5aa4756eeed062d4872c5a/model_ep7.nn",map_location=device)
 
 #freeze all but final layer
-for child in list(model.model.children())[:-1]:
-  for param in child.parameters():
-    param.requires_grad = False
+#for child in list(model.model.children())[:-1]:
+#  for param in child.parameters():
+#    param.requires_grad = False
 
-print(model)
+#print(model)
 
-optimizer = optim.SGD(filter(lambda p: p.requires_grad, model.parameters()), lr=1e-4, momentum=.9)
+optimizer = optim.SGD(filter(lambda p: p.requires_grad, model.parameters()), lr=1e-3, momentum=.9)
 scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.67, patience=0, verbose=True, threshold=1e-2)
 
 ds = ChessMoveDataset_cp()
