@@ -23,8 +23,8 @@ def init_weights(m):
     m.bias.data.fill_(0.01)
 
 device = ('cuda:0' if torch.cuda.is_available() and torch.cuda.device_count() > 0 else 'cpu')
-epochs = 100
-batch_size = 1<<8
+epochs = 1000
+batch_size = 1<<2
 random_subset = None
 
 githash = git.Repo(search_parent_directories=True).head.object.hexsha
@@ -39,11 +39,9 @@ model.apply(init_weights)
 model.to(device)
 
 optimizer = optim.SGD(model.parameters(), lr=1e-3, momentum=.9)
-scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.67, patience=0, verbose=True, threshold=1e-2)
+scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.67, patience=10, verbose=True, threshold=1e-2)
 
 ds = ChessMoveDataset_cp()
-tri = list(range(2048, len(ds), 1))
-vai = list(range(0, 2048, 1))
 
 trainset,valset,_ = torch.utils.data.random_split(ds,[batch_size,batch_size,len(ds)-2*batch_size])
 #trainset,valset = ChessMoveDataset_pre_it_pov_cnn(),ChessMoveDataset_pre_it_pov_cnn(mode='val')
