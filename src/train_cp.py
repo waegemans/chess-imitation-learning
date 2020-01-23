@@ -14,17 +14,10 @@ import chess
 import chess.engine
 
 
-def init_weights(m):
-  if type(m) == nn.Linear:
-    torch.nn.init.xavier_normal_(m.weight,2**0.5)
-    m.bias.data.fill_(0.01)
-  if type(m) == nn.Conv2d:
-    torch.nn.init.xavier_normal_(m.weight,2**0.5)
-    m.bias.data.fill_(0.01)
 
 device = ('cuda:0' if torch.cuda.is_available() and torch.cuda.device_count() > 0 else 'cpu')
 epochs = 1000
-batch_size = 1<<4
+batch_size = 1<<10
 random_subset = None
 
 githash = git.Repo(search_parent_directories=True).head.object.hexsha
@@ -34,16 +27,21 @@ os.mkdir(log_dir)
 
 log_file = open(log_dir+"out.csv", "w")
 
-model = models.cnn_alpha()
-model.apply(init_weights)
-model.to(device)
+model = torch.load("output/0ab90067a02d8eb69c5aa4756eeed062d4872c5a/model_ep7.nn",map_location=device)
 
-optimizer = optim.SGD(model.parameters(), lr=1e-3, momentum=.9)
+#freeze all but final layer
+for child in list(model.model.children())[:-1]:
+  for param in child.parameters():
+    param.requires_grad = False
+
+print(model)
+
+optimizer = optim.SGD(filter(lambda p: p.requires_grad, model.parameters()), lr=1e-4, momentum=.9)
 scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.67, patience=0, verbose=True, threshold=1e-2)
 
 ds = ChessMoveDataset_cp()
 
-trainset,valset,_ = torch.utils.data.random_split(ds,[batch_size,batch_size,len(ds)-2*batch_size])
+trainset,valset = torch.utils.data.random_split(ds,[len(ds)-2*batch_size,2*batch_size])
 #trainset,valset = ChessMoveDataset_pre_it_pov_cnn(),ChessMoveDataset_pre_it_pov_cnn(mode='val')
 
 train_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=True, num_workers=8, drop_last=True)
