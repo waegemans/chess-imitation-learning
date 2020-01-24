@@ -49,7 +49,7 @@ trainset,valset = torch.utils.data.random_split(ds,[len(ds)-valn,valn])
 train_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=True, num_workers=8, drop_last=True)
 val_loader = torch.utils.data.DataLoader(valset, batch_size=batch_size, shuffle=False)
 val_iter = iter(val_loader)
-log_file.write("epoch,batch_count,train_cross_entropy_loss,val_cross_entropy_loss,train_acc,val_acc,train_grads\n")
+log_file.write("epoch,batch_count,train_cross_entropy_loss,val_cross_entropy_loss,train_acc,val_acc,train_grads,train_min_cp,val_min_cp\n")
 
 def multi_cross_entropy(predicted, target, mask, topn=5):
   loss = 0
@@ -88,8 +88,9 @@ def validate_batch():
   predicted = model(x)
   val_loss = loss_fcn(predicted,c,m)
   val_acc = (predicted.detach().argmax(dim=1) == (c+m).argmax(dim=1)).cpu().numpy().mean()
+  min_cp_loss = (c[torch.arange(len(predicted)),predicted.detach().argmax(dim=1)].mean().cpu().numpy())
 
-  return val_loss.detach().data.cpu().numpy(), val_acc
+  return val_loss.detach().data.cpu().numpy(), val_acc, min_cp_loss
 
 
 def train():
@@ -108,14 +109,15 @@ def train():
     optimizer.step()
 
     train_acc = (predicted.detach().argmax(dim=1) == (c+m).argmax(dim=1)).cpu().numpy().mean()
-
+    min_cp_loss = (c[torch.arange(len(predicted)),predicted.detach().argmax(dim=1)].mean().cpu().numpy())
     val_loss = ''
     val_acc = ''
+    val_min_cp_loss = ''
 
     if (total_batch_count % 10 == 0):
-      val_loss,val_acc = validate_batch()
+      val_loss,val_acc, val_min_cp_loss = validate_batch()
 
-    log_file.write(','.join(map(str,[e,total_batch_count, train_loss.detach().data.cpu().numpy(), val_loss, train_acc, val_acc, train_grad]))+'\n')
+    log_file.write(','.join(map(str,[e,total_batch_count, train_loss.detach().data.cpu().numpy(), val_loss, train_acc, val_acc, train_grad, min_cp_loss, val_min_cp_loss]))+'\n')
     log_file.flush()
 
     total_batch_count += 1

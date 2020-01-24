@@ -27,7 +27,7 @@ def smooth(x):
 data = pd.read_csv('output/tmp.csv')
 vdata = data.dropna()
 
-fig,ax = plt.subplots(3)
+fig,ax = plt.subplots(4)
 
 ax[0].plot(data['batch_count'],data['train_cross_entropy_loss'], color='blue', alpha=0.1)
 ax[0].plot(vdata['batch_count'],vdata['val_cross_entropy_loss'], color='orange', alpha=0.1)
@@ -51,11 +51,21 @@ ax[2].plot(data['batch_count'],data['train_grads'], color='blue', alpha=0.1)
 x,y = smooth_window(data['train_grads'],data['batch_count'])
 ax[2].plot(y,x,label='Training grads', color='blue')
 
+if 'train_min_cp' in data.keys():
+    ax[3].plot(data['batch_count'],data['train_min_cp'], color='blue', alpha=0.1)
+    ax[3].plot(vdata['batch_count'],vdata['val_min_cp'], color='orange', alpha=0.1)
+    
+    x,y = smooth_window(data['train_min_cp'],data['batch_count'])
+    ax[3].plot(y,x,label='Training min cp loss', color='blue')
+    x,y = smooth_window(vdata['val_min_cp'],vdata['batch_count'])
+    ax[3].plot(y,x,label='Validation min cp loss', color='orange')
+
 
 for x in range(0,data['batch_count'].values[-1],batches_per_epoch):
   ax[0].axvline(x=x, ymin=0.0, ymax=1.0, color='r', alpha=0.1)
   ax[1].axvline(x=x, ymin=0.0, ymax=1.0, color='r', alpha=0.1)
   ax[2].axvline(x=x, ymin=0.0, ymax=1.0, color='r', alpha=0.1)
+  ax[3].axvline(x=x, ymin=0.0, ymax=1.0, color='r', alpha=0.1)
 
 ax[1].legend()
 ax[0].legend()
