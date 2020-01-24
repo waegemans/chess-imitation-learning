@@ -56,9 +56,9 @@ if 'train_min_cp' in data.keys():
     ax[3].plot(vdata['batch_count'],vdata['val_min_cp'], color='orange', alpha=0.1)
     
     x,y = smooth_window(data['train_min_cp'],data['batch_count'])
-    ax[3].plot(y,x,label='Training min cp loss', color='blue')
+    ax[3].plot(y,x,label='Training min pawn loss', color='blue')
     x,y = smooth_window(vdata['val_min_cp'],vdata['batch_count'])
-    ax[3].plot(y,x,label='Validation min cp loss', color='orange')
+    ax[3].plot(y,x,label='Validation min pawn loss', color='orange')
 
 
 for x in range(0,data['batch_count'].values[-1],batches_per_epoch):
