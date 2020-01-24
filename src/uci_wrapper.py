@@ -58,7 +58,6 @@ def go():
     print("bestmove " + uci)
 
 def random_move(board,p_dict):
-    print(p_dict)
     b = board
     p = None
     fen_without_count = ' '.join(board.fen().split()[:-2])
@@ -102,12 +101,12 @@ def go_mcts():
 
     while time.time()-10 < start:
         b = board.copy()
-        first_uci = random_move(b)
+        first_uci = random_move(b,p_dict)
         b.push_uci(first_uci)
         move_count = 0
 
         while not b.is_game_over():
-            uci = random_move(b)
+            uci = random_move(b,p_dict)
             b.push_uci(uci)
             move_count += 1
         
