@@ -35,8 +35,7 @@ model = torch.load("output/0ab90067a02d8eb69c5aa4756eeed062d4872c5a/model_ep7.nn
 #    param.requires_grad = False
 
 #print(model)
-
-optimizer = optim.SGD(filter(lambda p: p.requires_grad, model.parameters()), lr=1e-3, momentum=.9)
+optimizer = optim.SGD(filter(lambda p: p.requires_grad, model.parameters()), lr=1e-3, momentum=.9, weight_decay=0.2)
 scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.67, patience=0, verbose=True, threshold=1e-2)
 
 ds = ChessMoveDataset_cp()
@@ -65,8 +64,8 @@ def loss_fcn(predicted, target, mask):
   #mse = nn.functional.mse_loss(torch.flatten(predicted*mask),torch.flatten(target*mask),reduction='sum') / mask.sum()
   #hinge = (nn.functional.relu((predicted-target)*(1-mask))**2).sum() / (1-mask).sum()
   #cross_entropy = nn.functional.cross_entropy(predicted, target.argmax(dim=1),reduction='mean')
-  avg_cp_loss = -(nn.functional.softmax(predicted.masked_fill((1-mask).bool(),float('-inf')))*target).view(len(target),-1).sum(1).mean()
-  return avg_cp_loss
+  #avg_cp_loss = -(nn.functional.softmax(predicted)*target).view(len(target),-1).sum(1).mean()
+  #return avg_cp_loss
   #return multi_cross_entropy(predicted, target, mask)
 
 total_batch_count = 0
