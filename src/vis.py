@@ -69,4 +69,6 @@ for x in range(0,data['batch_count'].values[-1],batches_per_epoch):
 
 ax[1].legend()
 ax[0].legend()
+ax[2].legend()
+ax[3].legend()
 plt.show()
