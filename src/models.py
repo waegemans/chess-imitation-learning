@@ -71,7 +71,6 @@ class add_dropout_cnn(nn.Module):
     layers = []
     for x in other.children():
       layers.append(x)
-      print(type(x))
       if type(x) is cnn_res_block:
         layers.append(nn.Dropout2d())
 
