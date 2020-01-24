@@ -65,6 +65,22 @@ class cnn_simple(nn.Module):
       out = self.model(x)
       return out.reshape((out.shape[0],-1))
 
+class add_dropout_cnn(nn.Module):
+  def __init__(self,other):
+    super(add_dropout_cnn,self).__init__()
+    layers = []
+    for x in other.children():
+      layers.append(x)
+      print(type(x))
+      if type(x) is cnn_res_block:
+        layers.append(nn.Dropout2d())
+
+    self.model = nn.Sequential(*layers)
+  
+  def forward(self, x):
+    out = self.model(x)
+    return out.reshape((out.shape[0],-1))
+
 class cnn_alpha(nn.Module):
     def __init__(self):
         super(cnn_alpha,self).__init__()
