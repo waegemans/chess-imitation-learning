@@ -6,10 +6,11 @@ import numpy as np
 import time
 import sys
 
+device = ('cuda:0' if torch.cuda.is_available() and torch.cuda.device_count() > 0 else 'cpu')
 
 logfile = open("logfile.log",'w')
 board = chess.Board()
-model = torch.load("output/model.nn",map_location=torch.device('cpu'))
+model = torch.load("output/model.nn",map_location=device)
 model.eval()
 
 def uci():
@@ -39,12 +40,12 @@ def go():
         b = board.mirror()
     state = data_util.board_to_state(b)
     cnn = data_util.state_to_cnn(state)
-        
+
     y = model(torch.tensor(cnn,dtype=torch.float).unsqueeze(0)).detach()
     y = y - y.min()
     y_masked = y.numpy() * data_util.movelist_to_actionmask(b.legal_moves)
     uci = data_util.action_to_uci(y_masked)
-    
+
     if not board.turn:
         uci = data_util.flip_uci(uci)
         
@@ -63,10 +64,10 @@ def random_move(board):
     state = data_util.board_to_state(b)
     cnn = data_util.state_to_cnn(state)
 
-    y = model(torch.tensor(cnn,dtype=torch.float).unsqueeze(0)).detach()
-    y_masked = torch.nn.functional.softmax(y, dim=1) * torch.tensor(data_util.movelist_to_actionmask(b.legal_moves),dtype=torch.float)
+    y = model(torch.tensor(cnn,dtype=torch.float,device=device).unsqueeze(0)).detach()
+    y_masked = torch.nn.functional.softmax(y, dim=1) * torch.tensor(data_util.movelist_to_actionmask(b.legal_moves),dtype=torch.float,device=device)
     y_masked = torch.nn.functional.normalize(y_masked,p=1)
-    idx = np.random.choice(64*64, p=y_masked.numpy().reshape((-1)))
+    idx = np.random.choice(64*64, p=y_masked.cpu().numpy().reshape((-1)))
 
     uci = data_util.idx_to_uci(idx)
 
@@ -89,13 +90,13 @@ def go_mcts():
 
     start = time.time()
 
-    while time.time()-3 < start:
+    while time.time()-5 < start:
         b = board.copy()
         first_uci = random_move(b)
         b.push_uci(first_uci)
         move_count = 0
 
-        while not b.is_game_over() and move_count < 20:
+        while not b.is_game_over():
             uci = random_move(b)
             b.push_uci(uci)
             move_count += 1
