@@ -1,6 +1,8 @@
 import torch
 import torch.nn as nn
 
+import copy
+
 import numpy as np
 
 class fc_res_block(nn.Module):
@@ -70,9 +72,9 @@ class add_dropout_cnn(nn.Module):
     super(add_dropout_cnn,self).__init__()
     layers = []
     for x in other.children():
-      layers.append(x)
+      layers.append(copy.deepcopy(x))
       if type(x) is cnn_res_block:
-        layers.append(nn.Dropout2d())
+        layers.append(nn.Dropout2d(p=0.1))
 
     self.model = nn.Sequential(*layers)
   
