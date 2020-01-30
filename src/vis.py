@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-batches_per_epoch = 139
+batches_per_epoch = 131
 
 def smooth_exp(x):
   y = np.zeros_like(x, dtype=np.float)

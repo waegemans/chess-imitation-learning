@@ -89,13 +89,13 @@ def go_mcts():
 
     start = time.time()
 
-    while time.time()-3 < start:
+    while time.time()-10 < start:
         b = board.copy()
         first_uci = random_move(b)
         b.push_uci(first_uci)
         move_count = 0
 
-        while not b.is_game_over() and move_count < 20:
+        while not b.is_game_over():
             uci = random_move(b)
             b.push_uci(uci)
             move_count += 1
@@ -125,7 +125,8 @@ def go_mcts():
     logfile.write("Total Games: %d\n"%total_games)
     best_uci = ''
     min_loss_prob = 1
-    best_win_prob = 1
+    best_win_prob = 0
+    best_games = 0
     
     for uci in d.keys():
         wins,draws,losses = d[uci]
@@ -135,10 +136,11 @@ def go_mcts():
         loss_prob = losses/games
         win_prob = wins/games
 
-        if loss_prob < min_loss_prob or (loss_prob == min_loss_prob and win_prob > best_win_prob):
+        if loss_prob < min_loss_prob or (loss_prob == min_loss_prob and win_prob > best_win_prob) or (loss_prob == min_loss_prob and win_prob == best_win_prob and games > best_games):
             best_uci = uci
             min_loss_prob = loss_prob
             best_win_prob = win_prob
+            best_games = games
 
     print("bestmove " + best_uci)
 
