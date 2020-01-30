@@ -5,10 +5,12 @@ import time
 import os
 import csv
 
+#number of threads
 n_threads = 8
 depth = 18
 gamma = 1
 mate_score=10000
+multipv=10
 
 board = chess.Board()
 engine = chess.engine.SimpleEngine.popen_uci("../engine/stockfish_10_x64_modern")
@@ -39,7 +41,7 @@ while True:
         board.push(np.random.choice(list(board.legal_moves)))
         continue
     
-    info = engine.analyse(board,chess.engine.Limit(depth=depth),multipv=10,game=game_id)
+    info = engine.analyse(board,chess.engine.Limit(depth=depth),multipv=multipv,game=game_id)
     d = {}
     for i in info:
         d[i['pv'][0].uci()] = i['score'].pov(1).score(mate_score=mate_score)

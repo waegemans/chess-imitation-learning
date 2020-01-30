@@ -5,6 +5,7 @@ import queue
 from multiprocessing import Queue, Process
 import time
 import zlib
+import torch
 import torch.nn as nn
 import ast
 import csv
@@ -23,7 +24,7 @@ mate_score=10000
 multipv=10
 
 def analyze_game(fenqueue,dictqueue):
-    engine = chess.engine.SimpleEngine.popen_uci("../../engine/stockfish_10_x64_modern")
+    engine = chess.engine.SimpleEngine.popen_uci("../engine/stockfish_10_x64_modern")
     while True:
         fen = fenqueue.get()
         board = chess.Board(fen)
@@ -42,7 +43,7 @@ if __name__ == "__main__":
 
     movedict = {}
 
-    path = "data/depth%d_gamma%d/"%(depth,gamma)
+    path = "data/depth%d_gamma%f/"%(depth,gamma)
     os.makedirs(path,exist_ok=True)
 
     with open(path+"moves.csv","r") as f:
@@ -85,7 +86,7 @@ if __name__ == "__main__":
                     uci_list.append(uci)
                     cp_list.append(cp)
                 
-                uci = np.random.choice(uci_list,p=nn.functional.softmax(cp_list).numpy())
+                uci = np.random.choice(uci_list,p=nn.functional.softmax(torch.tensor(cp_list,dtype=torch.float)).numpy())
                 board.push_uci(uci)
         else:
             try:
