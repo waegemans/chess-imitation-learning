@@ -28,6 +28,7 @@ os.mkdir(log_dir)
 log_file = open(log_dir+"out.csv", "w")
 
 model = torch.load("output/0ab90067a02d8eb69c5aa4756eeed062d4872c5a/model_ep7.nn",map_location=device)
+model = models.add_dropout_cnn(model.model)
 
 #freeze all but final layer
 #for child in list(model.model.children())[:-1]:
@@ -35,7 +36,6 @@ model = torch.load("output/0ab90067a02d8eb69c5aa4756eeed062d4872c5a/model_ep7.nn
 #    param.requires_grad = False
 
 #print(model)
-
 optimizer = optim.SGD(filter(lambda p: p.requires_grad, model.parameters()), lr=1e-3, momentum=.9)
 scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.67, patience=0, verbose=True, threshold=1e-2)
 
@@ -49,7 +49,7 @@ trainset,valset = torch.utils.data.random_split(ds,[len(ds)-valn,valn])
 train_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=True, num_workers=8, drop_last=True)
 val_loader = torch.utils.data.DataLoader(valset, batch_size=batch_size, shuffle=False)
 val_iter = iter(val_loader)
-log_file.write("epoch,batch_count,train_cross_entropy_loss,val_cross_entropy_loss,train_acc,val_acc,train_grads\n")
+log_file.write("epoch,batch_count,train_cross_entropy_loss,val_cross_entropy_loss,train_acc,val_acc,train_grads,train_min_cp,val_min_cp\n")
 
 def multi_cross_entropy(predicted, target, mask, topn=5):
   loss = 0
@@ -65,6 +65,8 @@ def loss_fcn(predicted, target, mask):
   #mse = nn.functional.mse_loss(torch.flatten(predicted*mask),torch.flatten(target*mask),reduction='sum') / mask.sum()
   #hinge = (nn.functional.relu((predicted-target)*(1-mask))**2).sum() / (1-mask).sum()
   #cross_entropy = nn.functional.cross_entropy(predicted, target.argmax(dim=1),reduction='mean')
+  #avg_cp_loss = -(nn.functional.softmax(predicted)*target).view(len(target),-1).sum(1).mean()
+  #return avg_cp_loss
   return multi_cross_entropy(predicted, target, mask)
 
 total_batch_count = 0
@@ -88,8 +90,9 @@ def validate_batch():
   predicted = model(x)
   val_loss = loss_fcn(predicted,c,m)
   val_acc = (predicted.detach().argmax(dim=1) == (c+m).argmax(dim=1)).cpu().numpy().mean()
+  min_cp_loss = (c[torch.arange(len(predicted)),predicted.detach().argmax(dim=1)].mean().cpu().numpy())
 
-  return val_loss.detach().data.cpu().numpy(), val_acc
+  return val_loss.detach().data.cpu().numpy(), val_acc, min_cp_loss
 
 
 def train():
@@ -108,14 +111,15 @@ def train():
     optimizer.step()
 
     train_acc = (predicted.detach().argmax(dim=1) == (c+m).argmax(dim=1)).cpu().numpy().mean()
-
+    min_cp_loss = (c[torch.arange(len(predicted)),predicted.detach().argmax(dim=1)].mean().cpu().numpy())
     val_loss = ''
     val_acc = ''
+    val_min_cp_loss = ''
 
     if (total_batch_count % 10 == 0):
-      val_loss,val_acc = validate_batch()
+      val_loss,val_acc, val_min_cp_loss = validate_batch()
 
-    log_file.write(','.join(map(str,[e,total_batch_count, train_loss.detach().data.cpu().numpy(), val_loss, train_acc, val_acc, train_grad]))+'\n')
+    log_file.write(','.join(map(str,[e,total_batch_count, train_loss.detach().data.cpu().numpy(), val_loss, train_acc, val_acc, train_grad, min_cp_loss, val_min_cp_loss]))+'\n')
     log_file.flush()
 
     total_batch_count += 1

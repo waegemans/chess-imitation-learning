@@ -6,10 +6,11 @@ import numpy as np
 import time
 import sys
 
+device = ('cuda:0' if torch.cuda.is_available() and torch.cuda.device_count() > 0 else 'cpu')
 
 logfile = open("logfile.log",'w')
 board = chess.Board()
-model = torch.load("output/model.nn",map_location=torch.device('cpu'))
+model = torch.load("output/model.nn",map_location=device)
 model.eval()
 
 def uci():
@@ -39,12 +40,12 @@ def go():
         b = board.mirror()
     state = data_util.board_to_state(b)
     cnn = data_util.state_to_cnn(state)
-        
+
     y = model(torch.tensor(cnn,dtype=torch.float).unsqueeze(0)).detach()
     y = y - y.min()
     y_masked = y.numpy() * data_util.movelist_to_actionmask(b.legal_moves)
     uci = data_util.action_to_uci(y_masked)
-    
+
     if not board.turn:
         uci = data_util.flip_uci(uci)
         
@@ -56,17 +57,25 @@ def go():
     
     print("bestmove " + uci)
 
-def random_move(board):
+def random_move(board,p_dict):
     b = board
-    if not board.turn:
-        b = board.mirror()
-    state = data_util.board_to_state(b)
-    cnn = data_util.state_to_cnn(state)
+    p = None
+    fen_without_count = ' '.join(board.fen().split()[:-2])
+    if fen_without_count in p_dict.keys():
+        p = p_dict[fen_without_count]
+    else:
+        if not board.turn:
+            b = board.mirror()
+        state = data_util.board_to_state(b)
+        cnn = data_util.state_to_cnn(state)
 
-    y = model(torch.tensor(cnn,dtype=torch.float).unsqueeze(0)).detach()
-    y_masked = torch.nn.functional.softmax(y, dim=1) * torch.tensor(data_util.movelist_to_actionmask(b.legal_moves),dtype=torch.float)
-    y_masked = torch.nn.functional.normalize(y_masked,p=1)
-    idx = np.random.choice(64*64, p=y_masked.numpy().reshape((-1)))
+        y = model(torch.tensor(cnn,dtype=torch.float,device=device).unsqueeze(0)).detach()
+        y_masked = torch.nn.functional.softmax(y, dim=1) * torch.tensor(data_util.movelist_to_actionmask(b.legal_moves),dtype=torch.float,device=device)
+        y_masked = torch.nn.functional.normalize(y_masked,p=1)
+
+        p=y_masked.cpu().numpy().reshape((-1))
+        p_dict[fen_without_count] = p
+    idx = np.random.choice(64*64, p=p)
 
     uci = data_util.idx_to_uci(idx)
 
@@ -83,6 +92,7 @@ def random_move(board):
 
 
 def go_mcts():
+    p_dict = {}
     global board
     d = {}
     total_games = 0
@@ -91,12 +101,12 @@ def go_mcts():
 
     while time.time()-10 < start:
         b = board.copy()
-        first_uci = random_move(b)
+        first_uci = random_move(b,p_dict)
         b.push_uci(first_uci)
         move_count = 0
 
         while not b.is_game_over():
-            uci = random_move(b)
+            uci = random_move(b,p_dict)
             b.push_uci(uci)
             move_count += 1
         

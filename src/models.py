@@ -1,6 +1,8 @@
 import torch
 import torch.nn as nn
 
+import copy
+
 import numpy as np
 
 class fc_res_block(nn.Module):
@@ -64,6 +66,21 @@ class cnn_simple(nn.Module):
     def forward(self, x):
       out = self.model(x)
       return out.reshape((out.shape[0],-1))
+
+class add_dropout_cnn(nn.Module):
+  def __init__(self,other):
+    super(add_dropout_cnn,self).__init__()
+    layers = []
+    for x in other.children():
+      layers.append(copy.deepcopy(x))
+      if type(x) is cnn_res_block:
+        layers.append(nn.Dropout2d(p=0.1))
+
+    self.model = nn.Sequential(*layers)
+  
+  def forward(self, x):
+    out = self.model(x)
+    return out.reshape((out.shape[0],-1))
 
 class cnn_alpha(nn.Module):
     def __init__(self):

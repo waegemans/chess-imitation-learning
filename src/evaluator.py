@@ -8,7 +8,7 @@ import data_util
 
 engine = chess.engine.SimpleEngine.popen_uci('../engine/stockfish_10_x64')
 
-model = torch.load('output/model_ep12.nn')
+model = torch.load('output/model.nn')
 model.eval()
 
 
@@ -21,7 +21,7 @@ count = 0
 for i in range(20):
     print('Game',i)
     board = chess.Board()
-    analyze = engine.analyse(board,limit=chess.engine.Limit(depth=10))
+    analyze = engine.analyse(board,limit=chess.engine.Limit(depth=20))
     prev_centi = analyze['score'].pov(board.turn)
     while not board.is_game_over():
         state = data_util.board_to_state(board)
@@ -33,7 +33,7 @@ for i in range(20):
         except:
             board.push_uci(puci+'q')
     
-        analyze = engine.analyse(board,limit=chess.engine.Limit(depth=10))
+        analyze = engine.analyse(board,limit=chess.engine.Limit(depth=20))
         this_centi = analyze['score'].pov(not board.turn)
         
         if prev_centi.score() is None:
