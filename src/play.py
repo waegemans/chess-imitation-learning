@@ -18,6 +18,7 @@ for i in range(n_games):
             mv = engine.play(board).move()
         else:
             mv = np.random.choice(list(board.legal_moves))
+        board.push(mv)
     res = board.result()
     if res == '1-0':
         wins += 1
