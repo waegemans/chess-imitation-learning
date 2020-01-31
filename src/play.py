@@ -8,16 +8,19 @@ wins = 0
 losses = 0
 draws = 0
 
-engine = chess.engine.SimpleEngine.popen_uci("uci_wrapper.sh")
+engine = chess.engine.SimpleEngine.popen_uci("./uci_wrapper.sh")
+rengine = chess.engine.SimpleEngine.popen_uci("./uci_wrapper_random.sh")
 board = chess.Board()
 
 for i in range(n_games):
     board.reset()
     while not board.is_game_over():
-        if board.turn():
-            mv = engine.play(board).move()
+        mv = None
+        if board.turn:
+            mv = engine.play(board,limit=chess.engine.Limit()).move
+
         else:
-            mv = np.random.choice(list(board.legal_moves))
+            mv = rengine.play(board,limit=chess.engine.Limit()).move
         board.push(mv)
     res = board.result()
     if res == '1-0':

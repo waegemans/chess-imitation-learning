@@ -6,11 +6,20 @@ import numpy as np
 import time
 import sys
 import models
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument('sample_type', type=str,
+                   help='how to choose random move', default='model')
+args = parser.parse_args()
+
 
 device = ('cuda:0' if torch.cuda.is_available() and torch.cuda.device_count() > 0 else 'cpu')
 
 logfile = open("logfile.log",'w')
 board = chess.Board()
+
+
 
 #model = torch.load("output/model.nn",map_location=device)
 model = models.cnn_bare()
@@ -62,6 +71,8 @@ def go():
     print("bestmove " + uci)
 
 def random_move(board,p_dict):
+    if args.sample_type == 'random':
+        return np.random.choice(list(board.legal_moves)).uci()
     b = board
     p = None
     fen_without_count = ' '.join(board.fen().split()[:-2])
@@ -103,7 +114,7 @@ def go_mcts():
 
     start = time.time()
 
-    while time.time()-10 < start:
+    while total_games < 20:
         b = board.copy()
         first_uci = random_move(b,p_dict)
         b.push_uci(first_uci)
