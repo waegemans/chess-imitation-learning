@@ -65,6 +65,9 @@ if __name__ == "__main__":
     while True:
         if board.is_game_over():
             board.reset()
+        
+        if not board.turn:
+            board = board.mirror()
 
         while not dictqueue.empty():
             fen,mvs = dictqueue.get()
