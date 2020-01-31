@@ -5,12 +5,16 @@ from multiprocessing import Pool
 import numpy as np
 import time
 import sys
+import models
 
 device = ('cuda:0' if torch.cuda.is_available() and torch.cuda.device_count() > 0 else 'cpu')
 
 logfile = open("logfile.log",'w')
 board = chess.Board()
-model = torch.load("output/model.nn",map_location=device)
+
+#model = torch.load("output/model.nn",map_location=device)
+model = models.cnn_bare()
+model.to(device)
 model.eval()
 
 def uci():

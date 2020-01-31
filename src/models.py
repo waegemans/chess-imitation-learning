@@ -41,8 +41,8 @@ class cnn_bare(nn.Module):
           nn.BatchNorm2d(128),
           nn.ReLU(),
           
-          cnn_res_block(128,kernel_size=3),
-          cnn_res_block(128,kernel_size=3),
+          #cnn_res_block(128,kernel_size=3),
+          #cnn_res_block(128,kernel_size=3),
           
           nn.Conv2d(128,64,kernel_size=3,padding=1)
         )
