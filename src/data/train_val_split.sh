@@ -1,0 +1,6 @@
+#!/bin/bash
+shuf moves.csv > moves_shuf.csv
+val=$(bc <<< $(cat moves_shuf.csv | wc -l)*0.1/1)
+head -n -$val moves_shuf.csv > moves_train.csv
+tail -n -$val moves_shuf.csv > moves_val.csv
+mkdir pre
