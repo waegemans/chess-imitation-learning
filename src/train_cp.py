@@ -1,5 +1,5 @@
 import models
-from dataset import ChessMoveDataset_cp
+from dataset import ChessMoveDataset_cp_it
 import numpy as np
 import torch
 import torch.nn as nn
@@ -28,7 +28,7 @@ os.mkdir(log_dir)
 log_file = open(log_dir+"out.csv", "w")
 
 model = torch.load("output/0ab90067a02d8eb69c5aa4756eeed062d4872c5a/model_ep7.nn",map_location=device)
-model = models.add_dropout_cnn(model.model)
+#model = models.add_dropout_cnn(model.model)
 
 #freeze all but final layer
 #for child in list(model.model.children())[:-1]:
@@ -39,14 +39,16 @@ model = models.add_dropout_cnn(model.model)
 optimizer = optim.SGD(filter(lambda p: p.requires_grad, model.parameters()), lr=1e-3, momentum=.9)
 scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.67, patience=0, verbose=True, threshold=1e-2)
 
+'''
 ds = ChessMoveDataset_cp()
 
 valn = int(len(ds)*0.1)//batch_size * batch_size
 
 trainset,valset = torch.utils.data.random_split(ds,[len(ds)-valn,valn])
-#trainset,valset = ChessMoveDataset_pre_it_pov_cnn(),ChessMoveDataset_pre_it_pov_cnn(mode='val')
+'''
+trainset,valset = ChessMoveDataset_cp_it(),ChessMoveDataset_cp_it(mode='val')
 
-train_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=True, num_workers=8, drop_last=True)
+train_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=False, num_workers=8, drop_last=True)
 val_loader = torch.utils.data.DataLoader(valset, batch_size=batch_size, shuffle=False)
 val_iter = iter(val_loader)
 log_file.write("epoch,batch_count,train_cross_entropy_loss,val_cross_entropy_loss,train_acc,val_acc,train_grads,train_min_cp,val_min_cp\n")
@@ -98,7 +100,7 @@ def validate_batch():
 def train():
   global total_batch_count
   global running_train_loss
-  for x,c,m in progressbar.progressbar(train_loader):
+  for x,c,m in progressbar.progressbar(train_loader,max_value=len(trainset)//batch_size):
     x,c,m = x.to(device),c.to(device),m.to(device)
     model.train()
     optimizer.zero_grad()

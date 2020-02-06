@@ -3,6 +3,7 @@ import chess
 import torch
 import csv
 import ast
+import progressbar
 
 import data_util
 
@@ -32,7 +33,8 @@ class ChessMoveDataset_cp(torch.utils.data.Dataset):
         with open("data/depth18_gamma0.200000/moves.csv", "r") as csv_file:
             r = csv.reader(csv_file)
             data = []
-            for fen_without_count,dstr in r:
+            print('Loading data...')
+            for fen_without_count,dstr in progressbar.progressbar(r):
                 cpdict = ast.literal_eval(dstr)
                 fen = fen_without_count + " 0 1"
                 state = data_util.board_to_state(chess.Board(fen=fen))
@@ -48,6 +50,77 @@ class ChessMoveDataset_cp(torch.utils.data.Dataset):
 
     def __len__(self):
         return len(self.data)
+
+class ChessMoveDataset_cp_it(torch.utils.data.IterableDataset):
+    def __init__(self, mode='train'):
+        super(ChessMoveDataset_cp_it,self).__init__()
+        self.mode = mode
+        self.precompute()
+    
+    def precompute(self):
+        with open("data/depth18_gamma0.200000/moves_%s.csv"%(self.mode), "r") as csv_file:
+            r = csv.reader(csv_file)
+            self.n_items = 0
+
+            self.cnn = None
+            self.cp_loss = None
+            self.mask = None 
+            self.num_of_splits = 0
+
+            print('Loading data...')
+            for fen_without_count,dstr in progressbar.progressbar(r):
+                cpdict = ast.literal_eval(dstr)
+                fen = fen_without_count + " 0 1"
+                state = data_util.board_to_state(chess.Board(fen=fen))
+                cnn = data_util.state_to_cnn(state)
+                cp_loss,mask = data_util.cpdict_to_loss_mask(cpdict)
+                if self.cnn is None:
+                    self.cnn = cnn[np.newaxis]
+                    self.cp_loss = cp_loss[np.newaxis]
+                    self.mask = mask[np.newaxis]
+                else:
+                    self.cnn = np.append(self.cnn, cnn[np.newaxis], axis=0)
+                    self.cp_loss = np.append(self.cp_loss, cp_loss[np.newaxis], axis=0)
+                    self.mask = np.append(self.mask, mask[np.newaxis], axis=0)
+                self.n_items += 1
+                if self.n_items % 10000 == 0:
+                    self.save_precomputed()
+            self.save_precomputed()
+        
+    def save_precomputed(self):
+        if self.cnn is None:
+            return
+        np.save('data/depth18_gamma0.200000/pre/cnn_%s_%d.npy'%(self.mode,self.num_of_splits), self.cnn)
+        np.save('data/depth18_gamma0.200000/pre/cp_loss_%s_%d.npy'%(self.mode,self.num_of_splits), self.cp_loss)
+        np.save('data/depth18_gamma0.200000/pre/mask_%s_%d.npy'%(self.mode,self.num_of_splits), self.mask)
+        self.cnn = None
+        self.cp_loss = None
+        self.mask = None
+        self.num_of_splits += 1
+
+
+
+    def __iter__(self):
+        it = None
+        worker_info = torch.utils.data.get_worker_info()
+        if worker_info is None:
+            it = range(0,self.num_of_splits,1)
+        else:
+            worker_id = worker_info.id
+            num_workers = worker_info.num_workers
+            it = range(worker_id, self.num_of_splits, num_workers)
+        
+        for idx in it:
+            cnn = np.load('data/depth18_gamma0.200000/pre/cnn_%s_%d.npy'%(self.mode,idx))
+            cp_loss = np.load('data/depth18_gamma0.200000/pre/cp_loss_%s_%d.npy'%(self.mode,idx))
+            mask = np.load('data/depth18_gamma0.200000/pre/mask_%s_%d.npy'%(self.mode,idx))
+
+            for j in range(len(cnn)):
+                yield torch.tensor(cnn[j], dtype=torch.float) ,torch.tensor(cp_loss[j], dtype=torch.float) ,torch.tensor(mask[j], dtype=torch.float)
+
+
+    def __len__(self):
+        return self.n_items
 
 class ChessMoveDataset_it(torch.utils.data.IterableDataset):
     def __init__(self):

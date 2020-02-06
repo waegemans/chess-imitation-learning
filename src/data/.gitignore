@@ -1,3 +1,4 @@
 *
 !download_data.sh
+!train_val_split.sh
 !.gitignore
