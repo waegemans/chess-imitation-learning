@@ -29,7 +29,7 @@ class ChessMoveDataset(torch.utils.data.Dataset):
 class ChessMoveDataset_cp(torch.utils.data.Dataset):
     def __init__(self):
         super(ChessMoveDataset_cp,self).__init__()
-        with open("data/depth18_gamma1/moves.csv", "r") as csv_file:
+        with open("data/depth18_gamma0.200000/moves.csv", "r") as csv_file:
             r = csv.reader(csv_file)
             data = []
             for fen_without_count,dstr in r:
