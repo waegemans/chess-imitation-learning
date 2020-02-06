@@ -51,51 +51,58 @@ class ChessMoveDataset_cp(torch.utils.data.Dataset):
     def __len__(self):
         return len(self.data)
 
+def convert_cp_it(fen_without_count, dstr,queue):
+    cpdict = ast.literal_eval(dstr)
+    fen = fen_without_count + " 0 1"
+    state = data_util.board_to_state(chess.Board(fen=fen))
+    cnn = data_util.state_to_cnn(state)
+    cp_loss,mask = data_util.cpdict_to_loss_mask(cpdict)
+    return cnn,cp_loss,mask
+
 class ChessMoveDataset_cp_it(torch.utils.data.IterableDataset):
     def __init__(self, mode='train'):
         super(ChessMoveDataset_cp_it,self).__init__()
         self.mode = mode
         self.precompute()
+
     
     def precompute(self):
         with open("data/depth18_gamma0.200000/moves_%s.csv"%(self.mode), "r") as csv_file:
             r = csv.reader(csv_file)
             self.n_items = 0
 
-            self.cnn = None
-            self.cp_loss = None
-            self.mask = None 
+            self.cnn = []
+            self.cp_loss = []
+            self.mask = []
             self.num_of_splits = 0
 
             print('Loading data...')
+            fen_arr = []
+            dstr_arr = []
             for fen_without_count,dstr in progressbar.progressbar(r):
                 cpdict = ast.literal_eval(dstr)
                 fen = fen_without_count + " 0 1"
                 state = data_util.board_to_state(chess.Board(fen=fen))
                 cnn = data_util.state_to_cnn(state)
                 cp_loss,mask = data_util.cpdict_to_loss_mask(cpdict)
-                if self.cnn is None:
-                    self.cnn = cnn[np.newaxis]
-                    self.cp_loss = cp_loss[np.newaxis]
-                    self.mask = mask[np.newaxis]
-                else:
-                    self.cnn = np.append(self.cnn, cnn[np.newaxis], axis=0)
-                    self.cp_loss = np.append(self.cp_loss, cp_loss[np.newaxis], axis=0)
-                    self.mask = np.append(self.mask, mask[np.newaxis], axis=0)
+
+                self.cnn.append(cnn)
+                self.cp_loss.append(cp_loss)
+                self.mask.append(mask)
                 self.n_items += 1
                 if self.n_items % 10000 == 0:
                     self.save_precomputed()
             self.save_precomputed()
         
     def save_precomputed(self):
-        if self.cnn is None:
+        if self.cnn is []:
             return
-        np.save('data/depth18_gamma0.200000/pre/cnn_%s_%d.npy'%(self.mode,self.num_of_splits), self.cnn)
-        np.save('data/depth18_gamma0.200000/pre/cp_loss_%s_%d.npy'%(self.mode,self.num_of_splits), self.cp_loss)
-        np.save('data/depth18_gamma0.200000/pre/mask_%s_%d.npy'%(self.mode,self.num_of_splits), self.mask)
-        self.cnn = None
-        self.cp_loss = None
-        self.mask = None
+        np.save('data/depth18_gamma0.200000/pre/cnn_%s_%d.npy'%(self.mode,self.num_of_splits), np.array(self.cnn))
+        np.save('data/depth18_gamma0.200000/pre/cp_loss_%s_%d.npy'%(self.mode,self.num_of_splits), np.array(self.cp_loss))
+        np.save('data/depth18_gamma0.200000/pre/mask_%s_%d.npy'%(self.mode,self.num_of_splits), np.array(self.mask))
+        self.cnn = []
+        self.cp_loss = []
+        self.mask = []
         self.num_of_splits += 1
 
 
