@@ -68,8 +68,8 @@ for e,b in zip(data['epoch'],data['batch_count']):
   ax[2].axvline(x=b, ymin=0.0, ymax=1.0, color='r', alpha=0.1)
   ax[3].axvline(x=b, ymin=0.0, ymax=1.0, color='r', alpha=0.1)
 
-ax[1].legend()
-ax[0].legend()
-ax[2].legend()
-ax[3].legend()
+ax[1].legend(prop={'size': 6})
+ax[0].legend(prop={'size': 6})
+ax[2].legend(prop={'size': 6})
+ax[3].legend(prop={'size': 6})
 plt.show()
