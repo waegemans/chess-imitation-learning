@@ -19,6 +19,7 @@ device = ('cuda:0' if torch.cuda.is_available() and torch.cuda.device_count() > 
 logfile = open("logfile.log",'w')
 board = chess.Board()
 
+n_par_games = 64
 
 
 #model = torch.load("output/model.nn",map_location=device)
@@ -70,40 +71,49 @@ def go():
     
     print("bestmove " + uci)
 
-def random_move(board,p_dict):
+def random_move(boards,p_dict):
     if args.sample_type == 'random':
-        return np.random.choice(list(board.legal_moves)).uci()
-    b = board
-    p = None
-    fen_without_count = ' '.join(board.fen().split()[:-2])
-    if fen_without_count in p_dict.keys():
-        p = p_dict[fen_without_count]
-    else:
-        if not board.turn:
-            b = board.mirror()
+        return [np.random.choice(list(b.legal_moves)).uci() for b in boards]
+    cnn_t = torch.zeros(n_par_games,17,8,8,dtype=torch.float,device=device)
+    mask_t = torch.zeros(n_par_games,64*64,dtype=torch.float,device=device)
+    fen_without_count = [None for _ in boards]
+    for i,b in enumerate(boards):
+        turn = b.turn
+        #p = None
+        #fen_without_count[i] = ' '.join(board.fen().split()[:-2])
+        #if fen_without_count[i] in p_dict.keys():
+        #    p = p_dict[fen_without_count[i]]
+        if not turn:
+            b = b.mirror()
         state = data_util.board_to_state(b)
         cnn = data_util.state_to_cnn(state)
+        cnn_t[i] = torch.tensor(cnn).to(device)
+        mask_t[i] = torch.tensor(data_util.movelist_to_actionmask(b.legal_moves),dtype=torch.float,device=device)
 
-        y = model(torch.tensor(cnn,dtype=torch.float,device=device).unsqueeze(0)).detach()
-        y_masked = torch.nn.functional.softmax(y, dim=1) * torch.tensor(data_util.movelist_to_actionmask(b.legal_moves),dtype=torch.float,device=device)
-        y_masked = torch.nn.functional.normalize(y_masked,p=1)
+    y = model(cnn_t).detach()
+    y_masked = torch.nn.functional.softmax(y, dim=1) * mask_t
+    y_masked = torch.nn.functional.normalize(y_masked,p=1)
 
-        p=y_masked.cpu().numpy().reshape((-1))
-        p_dict[fen_without_count] = p
-    idx = np.random.choice(64*64, p=p)
-
-    uci = data_util.idx_to_uci(idx)
-
-    if not board.turn:
-        uci = data_util.flip_uci(uci)
-
-    try:
-        board.push_uci(uci)
-        board.pop()
-    except:
-        uci += np.random.choice(['q','r','b','n'])
+    p=y_masked.cpu().numpy()
     
-    return uci
+    ucis = []
+    for i,b in enumerate(boards):
+        #p_dict[fen_without_count[i]] = p[i]
+        idx = np.random.choice(64*64, p=p[i])
+
+        uci = data_util.idx_to_uci(idx)
+
+        if not b.turn:
+            uci = data_util.flip_uci(uci)
+
+        try:
+            b.push_uci(uci)
+            b.pop()
+        except:
+            uci += np.random.choice(['q','r','b','n'])
+        
+        ucis.append(uci)
+    return ucis
 
 
 def go_mcts():
@@ -114,39 +124,46 @@ def go_mcts():
 
     start = time.time()
 
-    while total_games < 20:
-        b = board.copy()
-        first_uci = random_move(b,p_dict)
-        b.push_uci(first_uci)
-        move_count = 0
+    boards = [board.copy() for _ in range(n_par_games)]
+    first_ucis = [None for _ in range(n_par_games)]
+    
+    while time.time() - start < 3:
+        for i in range(n_par_games):
+            b,first_uci = boards[i],first_ucis[i]
+            if b.is_game_over():
+                res = b.result()
 
-        while not b.is_game_over():
-            uci = random_move(b,p_dict)
-            b.push_uci(uci)
-            move_count += 1
-        
-        res = b.result()
+                if first_uci not in d.keys():
+                    d[first_uci] = (0,0,0)
 
-        if first_uci not in d.keys():
-            d[first_uci] = (0,0,0)
-        
-        wins,draws,losses = d[first_uci]
-        total_games += 1
+                wins,draws,losses = d[first_uci]
+                total_games += 1
 
-        if res == '1-0':
-            if board.turn:
-                wins += 1
-            else:
-                losses += 1
-        elif res == '0-1':
-            if board.turn:
-                losses += 1
-            else:
-                wins += 1
-        else:
-            draws += 1
-        
-        d[first_uci] = wins,draws,losses
+                if res == '1-0':
+                    if board.turn:
+                        wins += 1
+                    else:
+                        losses += 1
+                elif res == '0-1':
+                    if board.turn:
+                        losses += 1
+                    else:
+                        wins += 1
+                else:
+                    draws += 1
+                
+                d[first_uci] = wins,draws,losses
+                boards[i] = board.copy()
+                first_ucis[i] = None
+            
+            #
+        next_ucis = random_move(boards,p_dict)
+        for i in range(n_par_games):
+            boards[i].push_uci(next_ucis[i])
+            if first_ucis[i] is None:
+                first_ucis[i] = next_ucis[i]
+            
+                
     logfile.write("Total Games: %d\n"%total_games)
     best_uci = ''
     min_loss_prob = 1
@@ -166,6 +183,8 @@ def go_mcts():
             min_loss_prob = loss_prob
             best_win_prob = win_prob
             best_games = games
+    if best_uci == '':
+        best_uci = np.random.choice(list(board.legal_moves)).uci()
 
     print("bestmove " + best_uci)
 
