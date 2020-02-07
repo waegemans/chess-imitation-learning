@@ -70,7 +70,7 @@ def loss_fcn(predicted, target, mask):
   #avg_cp_loss = -(nn.functional.softmax(predicted)*target).view(len(target),-1).sum(1).mean()
   #return avg_cp_loss
   #m_cross_entropy = multi_cross_entropy(predicted, target, mask)
-  return mse + hinge 
+  return cross_entropy 
 
 total_batch_count = 0
 running_train_loss = None
