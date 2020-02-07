@@ -4,6 +4,7 @@ import torch
 import csv
 import ast
 import progressbar
+import glob
 
 import data_util
 
@@ -60,10 +61,14 @@ def convert_cp_it(fen_without_count, dstr,queue):
     return cnn,cp_loss,mask
 
 class ChessMoveDataset_cp_it(torch.utils.data.IterableDataset):
-    def __init__(self, mode='train'):
+    def __init__(self, mode='train', precompute=False):
         super(ChessMoveDataset_cp_it,self).__init__()
         self.mode = mode
-        self.precompute()
+        if precompute:
+            self.precompute()
+        else:
+            self.num_of_splits = len(glob.glob('data/depth18_gamma0.200000/pre/cnn_%s_*.npy'%self.mode))
+            self.n_items = self.num_of_splits*10000
 
     
     def precompute(self):

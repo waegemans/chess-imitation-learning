@@ -66,10 +66,11 @@ def multi_cross_entropy(predicted, target, mask, topn=5):
 def loss_fcn(predicted, target, mask):
   #mse = nn.functional.mse_loss(torch.flatten(predicted*mask),torch.flatten(target*mask),reduction='sum') / mask.sum()
   #hinge = (nn.functional.relu((predicted-target)*(1-mask))**2).sum() / (1-mask).sum()
-  #cross_entropy = nn.functional.cross_entropy(predicted, target.argmax(dim=1),reduction='mean')
+  cross_entropy = nn.functional.cross_entropy(predicted, target.argmax(dim=1),reduction='mean')
   #avg_cp_loss = -(nn.functional.softmax(predicted)*target).view(len(target),-1).sum(1).mean()
   #return avg_cp_loss
-  return multi_cross_entropy(predicted, target, mask)
+  #m_cross_entropy = multi_cross_entropy(predicted, target, mask)
+  return mse + hinge 
 
 total_batch_count = 0
 running_train_loss = None

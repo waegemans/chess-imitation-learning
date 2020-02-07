@@ -2,8 +2,6 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-batches_per_epoch = 131
-
 def smooth_exp(x):
   y = np.zeros_like(x, dtype=np.float)
   for i,xi in enumerate(x):
@@ -60,12 +58,15 @@ if 'train_min_cp' in data.keys():
     x,y = smooth_window(vdata['val_min_cp'],vdata['batch_count'])
     ax[3].plot(y,x,label='Validation min pawn loss', color='orange')
 
-
-for x in range(0,data['batch_count'].values[-1],batches_per_epoch):
-  ax[0].axvline(x=x, ymin=0.0, ymax=1.0, color='r', alpha=0.1)
-  ax[1].axvline(x=x, ymin=0.0, ymax=1.0, color='r', alpha=0.1)
-  ax[2].axvline(x=x, ymin=0.0, ymax=1.0, color='r', alpha=0.1)
-  ax[3].axvline(x=x, ymin=0.0, ymax=1.0, color='r', alpha=0.1)
+prev_e = -1
+for e,b in zip(data['epoch'],data['batch_count']):
+  if e == prev_e:
+    continue
+  prev_e = e
+  ax[0].axvline(x=b, ymin=0.0, ymax=1.0, color='r', alpha=0.1)
+  ax[1].axvline(x=b, ymin=0.0, ymax=1.0, color='r', alpha=0.1)
+  ax[2].axvline(x=b, ymin=0.0, ymax=1.0, color='r', alpha=0.1)
+  ax[3].axvline(x=b, ymin=0.0, ymax=1.0, color='r', alpha=0.1)
 
 ax[1].legend()
 ax[0].legend()
