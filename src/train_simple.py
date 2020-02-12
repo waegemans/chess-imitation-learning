@@ -34,7 +34,7 @@ os.mkdir(log_dir)
 
 log_file = open(log_dir+"out.csv", "w")
 
-model = models.unet_simple()
+model = models.RecNN()
 model.apply(init_weights)
 model.to(device)
 
@@ -120,6 +120,7 @@ def validate():
 for e in range(epochs):
   torch.save(model, log_dir+'model_ep%d.nn'%e)
   print ("Epoch %d of %d:"%(e,epochs))
+  print ("Recursion depth: %d"%model.no_passes)
 
   train()
   #val_loss = validate()
@@ -127,6 +128,7 @@ for e in range(epochs):
   print(running_train_loss)
 
   scheduler.step(running_train_loss)
+  model.no_passes += 1
 
 torch.save(model, 'output/model_ep%d.nn'%epochs)
 

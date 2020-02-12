@@ -171,6 +171,35 @@ class unet_simple(nn.Module):
     out = self.out(d1)
     return out.reshape((out.shape[0],-1))
 
+class RecNN(nn.Module):
+  def __init__(self):
+    super(RecNN,self).__init__()
+    self.head = nn.Sequential(
+      nn.Conv2d(17,196,kernel_size=3,padding=1),
+      nn.ReLU(),
+      nn.Conv2d(196,196,kernel_size=3,padding=1),
+      nn.ReLU(),
+    )
+    self.back = nn.Sequential(
+      nn.Conv2d(196,196,kernel_size=3,padding=1),
+      nn.ReLU(),
+      nn.Conv2d(196,196,kernel_size=3,padding=1)
+    )
+    self.tail = nn.Sequential(
+      nn.Conv2d(196,196,kernel_size=3,padding=1),
+      nn.ReLU(),
+      nn.Conv2d(196,64,kernel_size=1)
+    )
+    self.no_passes = 2
+
+  def forward(self,x):
+    h = self.head(x)
+    out = h
+    for i in range(self.no_passes):
+      out = nn.functional.relu(self.back(out) + h)
+    out = self.tail(out)
+    return out.reshape((out.shape[0],-1))
+
 def small():
   return nn.Sequential(
     nn.Linear(773,512),
