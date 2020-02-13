@@ -200,6 +200,80 @@ class RecNN(nn.Module):
     out = self.tail(out)
     return out.reshape((out.shape[0],-1))
 
+class MultiAttentionHead(nn.Module):
+  def __init__(self,query_dim,value_dim,q_in_dim,kv_in_dim,out_dim,n_groups):
+    super(MultiAttentionHead,self).__init__()
+    self.query_dim = query_dim
+    self.value_dim = value_dim
+    self.n_groups = n_groups
+    self.inv_sqrt_dim = query_dim ** -.5
+
+    self.query = nn.Linear(q_in_dim,self.query_dim*self.n_groups)
+    self.key = nn.Linear(kv_in_dim,self.query_dim*self.n_groups)
+    self.value = nn.Linear(kv_in_dim,self.value_dim*self.n_groups)
+    self.project = nn.Linear(value_dim*n_groups,out_dim)
+    self.ln = nn.LayerNorm(out_dim)
+
+  def forward(self,Q,KV):
+    # Q,KV: [batch,seq,in_dim]
+    query = self.query(Q)
+    key = self.key(KV)
+    value = self.value(KV)
+    batch_size = query.size(0)
+    seq_size = query.size(1)
+    #query: [batch,seq,dim*groups]
+    query = query.view(batch_size,seq_size,self.n_groups,self.query_dim).permute(0,2,1,3).reshape(-1,seq_size,self.query_dim)
+    key = key.view(batch_size,seq_size,self.n_groups,self.query_dim).permute(0,2,3,1).reshape(-1,self.query_dim,seq_size)
+
+    attention = torch.bmm(query,key)
+    scores = nn.functional.softmax(attention*self.inv_sqrt_dim, dim=2)
+    #attention: [batch*groups,seq,seq]
+    value = value.view(batch_size,seq_size,self.value_dim,self.n_groups).permute(0,3,1,2).reshape(-1,seq_size,self.value_dim)
+    attention = torch.bmm(scores,value)
+    #attention: [batch*groups,seq,value_dim]
+    attention = attention.view(batch_size,self.n_groups,seq_size,self.value_dim).permute(0,2,3,1).reshape(batch_size,seq_size,-1)
+
+    attention = self.project(attention)
+    attention = self.ln(attention)
+
+    return attention, scores
+
+class ffn(nn.Module):
+  def __init__(self,dim,hidden):
+    super(ffn,self).__init__()
+    self.model = nn.Sequential(
+      nn.Linear(dim,hidden),
+      nn.ReLU(),
+      nn.Linear(hidden,dim)
+    )
+    self.ln = nn.LayerNorm(dim)
+  
+  def forward(self,X):
+    out = self.model(X)
+    out += X
+    return self.ln(out)
+
+class Att_small(nn.Module):
+  def __init__(self):
+    super(Att_small,self).__init__()
+    self.m1 = MultiAttentionHead(64,64,71,71,64,8)
+    self.f1 = ffn(64,64)
+    self.m2 = MultiAttentionHead(64,64,64,64,64,8)
+    self.f2 = ffn(64,64)
+    self.l1 = nn.Linear(64*32,256)
+    self.l2 = nn.Linear(256,64*64)
+
+  def forward(self,x):
+    out,_ = self.m1(x,x)
+    out = self.f1(out)
+    out,_ = self.m2(out,out)
+    out = self.f1(out)
+    return self.l2(nn.functional.relu(self.l1(out.view(-1,64*32))))
+    
+
+
+
+
 def small():
   return nn.Sequential(
     nn.Linear(773,512),

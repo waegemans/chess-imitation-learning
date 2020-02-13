@@ -1,15 +1,12 @@
 import torch
-from models import ssf_asf_1024
+from models import MultiAttentionHead
 
-model = ssf_asf_1024()
-print(model)
+m = MultiAttentionHead(64,64,64,64,64,4)
 
-data = torch.randn(12,773)
-mask = torch.empty(4096).uniform_(0, 1)
-mask = torch.bernoulli(mask)
+x = torch.randn(5,4,64)
 
-print (mask)
-out = model(data,mask)
+y,z = m(x,x)
+print(y.shape)
+print(z.shape)
 
-print(out.shape)
-print(out)
+print(z)

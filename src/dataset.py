@@ -134,6 +134,80 @@ class ChessMoveDataset_cp_it(torch.utils.data.IterableDataset):
     def __len__(self):
         return self.n_items
 
+class ChessMoveDataset_pieces_it(torch.utils.data.IterableDataset):
+    def __init__(self, mode='train', precompute=False):
+        super(ChessMoveDataset_pieces_it,self).__init__()
+        self.mode = mode
+        if precompute:
+            self.precompute()
+        else:
+            self.num_of_splits = len(glob.glob('data/depth18_gamma0.200000/pre_pieces/pieces_%s_*.npy'%self.mode))
+            self.n_items = self.num_of_splits*10000
+
+    
+    def precompute(self):
+        with open("data/depth18_gamma0.200000/moves_%s.csv"%(self.mode), "r") as csv_file:
+            r = csv.reader(csv_file)
+            self.n_items = 0
+
+            self.pieces = []
+            self.cp_loss = []
+            self.mask = []
+            self.num_of_splits = 0
+
+            print('Loading data...')
+            fen_arr = []
+            dstr_arr = []
+            for fen_without_count,dstr in progressbar.progressbar(r):
+                cpdict = ast.literal_eval(dstr)
+                fen = fen_without_count + " 0 1"
+                pieces = data_util.board_to_pieces(chess.Board(fen=fen))
+                cp_loss,mask = data_util.cpdict_to_loss_mask(cpdict)
+
+                self.pieces.append(pieces)
+                self.cp_loss.append(cp_loss)
+                self.mask.append(mask)
+                self.n_items += 1
+                if self.n_items % 10000 == 0:
+                    self.save_precomputed()
+            self.save_precomputed()
+        
+    def save_precomputed(self):
+        if self.pieces is []:
+            return
+        np.save('data/depth18_gamma0.200000/pre_pieces/pieces_%s_%d.npy'%(self.mode,self.num_of_splits), np.array(self.pieces))
+        np.save('data/depth18_gamma0.200000/pre_pieces/cp_loss_%s_%d.npy'%(self.mode,self.num_of_splits), np.array(self.cp_loss))
+        np.save('data/depth18_gamma0.200000/pre_pieces/mask_%s_%d.npy'%(self.mode,self.num_of_splits), np.array(self.mask))
+        self.pieces = []
+        self.cp_loss = []
+        self.mask = []
+        self.num_of_splits += 1
+
+
+
+    def __iter__(self):
+        it = None
+        worker_info = torch.utils.data.get_worker_info()
+        if worker_info is None:
+            it = range(0,self.num_of_splits,1)
+        else:
+            worker_id = worker_info.id
+            num_workers = worker_info.num_workers
+            it = range(worker_id, self.num_of_splits, num_workers)
+        
+        for idx in it:
+            pieces = np.load('data/depth18_gamma0.200000/pre_pieces/pieces_%s_%d.npy'%(self.mode,idx))
+            cp_loss = np.load('data/depth18_gamma0.200000/pre_pieces/cp_loss_%s_%d.npy'%(self.mode,idx))
+            mask = np.load('data/depth18_gamma0.200000/pre_pieces/mask_%s_%d.npy'%(self.mode,idx))
+
+            for j in range(len(pieces)):
+                yield torch.tensor(pieces[j], dtype=torch.float) ,torch.tensor(cp_loss[j], dtype=torch.float) ,torch.tensor(mask[j], dtype=torch.float)
+
+
+    def __len__(self):
+        return self.n_items
+
+
 class ChessMoveDataset_it(torch.utils.data.IterableDataset):
     def __init__(self):
         super(ChessMoveDataset_it,self).__init__()

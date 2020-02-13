@@ -17,6 +17,18 @@ def board_to_state(board):
   res[772] = board.turn
   return res
 
+def board_to_pieces(board):
+  pieces = np.zeros((32,1+6+64), dtype=np.float)
+  n = 0
+  for color in (True,False):
+    for piece in range(1,7):
+      for square in board.pieces(piece,color):
+        pieces[n,0] = color
+        pieces[n,piece] = 1
+        pieces[n,7+square] = 1
+        n += 1
+  return pieces
+
 def state_to_cnn(state):
   res = np.zeros((17,8,8), np.float)
   res[:12,:,:] = state[:768].reshape((12,8,8))
