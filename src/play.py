@@ -9,7 +9,7 @@ losses = 0
 draws = 0
 
 engine = chess.engine.SimpleEngine.popen_uci("./uci_wrapper.sh")
-rengine = chess.engine.SimpleEngine.popen_uci("./uci_wrapper_random.sh")
+rengine = chess.engine.SimpleEngine.popen_uci("../engine/stockfish_10_x64_modern")
 board = chess.Board()
 
 for i in range(n_games):
@@ -20,7 +20,7 @@ for i in range(n_games):
             mv = engine.play(board,limit=chess.engine.Limit()).move
 
         else:
-            mv = rengine.play(board,limit=chess.engine.Limit()).move
+            mv = rengine.play(board,limit=chess.engine.Limit(depth=i)).move
         board.push(mv)
     res = board.result()
     if res == '1-0':
@@ -29,6 +29,7 @@ for i in range(n_games):
         losses += 1
     else:
         draws += 1
+    print(res, i)
 
 print(wins,draws,losses)
 
