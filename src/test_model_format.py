@@ -1,12 +1,10 @@
 import torch
-from models import MultiAttentionHead
+from models import Att_small
 
-m = MultiAttentionHead(64,64,64,64,64,4)
+m = Att_small()
 
-x = torch.randn(5,4,64)
+x = torch.randn(3,2,71)
+y = torch.randn(3,4,128)
 
-y,z = m(x,x)
-print(y.shape)
-print(z.shape)
-
-print(z)
+o =m(x,y)
+print(o.shape)

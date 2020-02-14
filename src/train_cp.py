@@ -55,7 +55,7 @@ log_file.write("epoch,batch_count,train_cross_entropy_loss,val_cross_entropy_los
 
 def multi_cross_entropy(predicted, target, mask, topn=5):
   loss = 0
-  midx = np.argpartition(-target.cpu().numpy(),topn)[:,:topn]
+  midx = np.argpartition(-(target+mask).cpu().numpy(),topn)[:,:topn]
   w = torch.nn.functional.softmax(torch.tensor(np.take_along_axis(target.cpu().numpy(),midx,axis=1),device=device), dim=1)
   for i in range(topn):
     loss += (w[:,i]* nn.functional.cross_entropy(predicted, torch.tensor(midx[:,i],device=device),reduction='none')).mean()
@@ -66,7 +66,7 @@ def multi_cross_entropy(predicted, target, mask, topn=5):
 def loss_fcn(predicted, target, mask):
   #mse = nn.functional.mse_loss(torch.flatten(predicted*mask),torch.flatten(target*mask*0.05),reduction='sum') / mask.sum()
   #hinge = (nn.functional.relu((predicted-target*0.05)*(1-mask))**2).sum() / (1-mask).sum()
-  #cross_entropy = nn.functional.cross_entropy(predicted, target.argmax(dim=1),reduction='mean')
+  #cross_entropy = nn.functional.cross_entropy(predicted, (target+mask).argmax(dim=1),reduction='mean')
   #avg_cp_loss = -(nn.functional.softmax(predicted)*target).view(len(target),-1).sum(1).mean()
   #return avg_cp_loss
   m_cross_entropy = multi_cross_entropy(predicted, target, mask)
@@ -81,7 +81,7 @@ def sum_grads(model):
 
 def validate_batch():
   global val_iter
-  x,c,m,l = None,None,None
+  x,c,m,l = None,None,None,None
   try:
     x,c,m,l = next(val_iter)
   except:
@@ -91,7 +91,7 @@ def validate_batch():
   x,c,m,l = x.to(device),c.to(device),m.to(device),l.to(device)
   model.eval()
   predicted = model(x)
-  predicted[l==0] = -float('inf')
+  predicted = predicted.masked_fill(l==0,-float('inf'))
   val_loss = loss_fcn(predicted,c,m)
   val_acc = (predicted.detach().argmax(dim=1) == (c+m).argmax(dim=1)).cpu().numpy().mean()
   min_cp_loss = (c[torch.arange(len(predicted)),predicted.detach().argmax(dim=1)].mean().cpu().numpy())
@@ -109,7 +109,7 @@ def train():
     #x,y = x.type(torch.float), y.type(torch.float)
 
     predicted = model(x)
-    predicted[l==0] = -float('inf')
+    predicted = predicted.masked_fill(l==0,-float('inf'))
     train_loss = loss_fcn(predicted,c,m)
     train_loss.backward()
     train_grad = sum_grads(model)
