@@ -90,7 +90,7 @@ class ChessMoveDataset_cp_it(torch.utils.data.IterableDataset):
                 fen = fen_without_count + " 0 1"
                 board = chess.Board(fen=fen)
                 state = data_util.board_to_state(board)
-                legal_mask = data_util.actionlist_to_mask(board.legal_moves)
+                legal_mask = data_util.movelist_to_actionmask(board.legal_moves)
                 cnn = data_util.state_to_cnn(state)
                 cp_loss,mask = data_util.cpdict_to_loss_mask(cpdict)
 
