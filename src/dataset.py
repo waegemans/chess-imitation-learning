@@ -79,6 +79,7 @@ class ChessMoveDataset_cp_it(torch.utils.data.IterableDataset):
             self.cnn = []
             self.cp_loss = []
             self.mask = []
+            self.legal_mask = []
             self.num_of_splits = 0
 
             print('Loading data...')
@@ -87,13 +88,16 @@ class ChessMoveDataset_cp_it(torch.utils.data.IterableDataset):
             for fen_without_count,dstr in progressbar.progressbar(r):
                 cpdict = ast.literal_eval(dstr)
                 fen = fen_without_count + " 0 1"
-                state = data_util.board_to_state(chess.Board(fen=fen))
+                board = chess.Board(fen=fen)
+                state = data_util.board_to_state(board)
+                legal_mask = data_util.actionlist_to_mask(board.legal_moves)
                 cnn = data_util.state_to_cnn(state)
                 cp_loss,mask = data_util.cpdict_to_loss_mask(cpdict)
 
                 self.cnn.append(cnn)
                 self.cp_loss.append(cp_loss)
                 self.mask.append(mask)
+                self.legal_mask.append(legal_mask)
                 self.n_items += 1
                 if self.n_items % 10000 == 0:
                     self.save_precomputed()
@@ -105,9 +109,11 @@ class ChessMoveDataset_cp_it(torch.utils.data.IterableDataset):
         np.save('data/depth18_gamma0.200000/pre/cnn_%s_%d.npy'%(self.mode,self.num_of_splits), np.array(self.cnn))
         np.save('data/depth18_gamma0.200000/pre/cp_loss_%s_%d.npy'%(self.mode,self.num_of_splits), np.array(self.cp_loss))
         np.save('data/depth18_gamma0.200000/pre/mask_%s_%d.npy'%(self.mode,self.num_of_splits), np.array(self.mask))
+        np.save('data/depth18_gamma0.200000/pre/legal_mask_%s_%d.npy'%(self.mode,self.num_of_splits), np.array(self.legal_mask))
         self.cnn = []
         self.cp_loss = []
         self.mask = []
+        self.legal_mask = []
         self.num_of_splits += 1
 
 
@@ -126,9 +132,10 @@ class ChessMoveDataset_cp_it(torch.utils.data.IterableDataset):
             cnn = np.load('data/depth18_gamma0.200000/pre/cnn_%s_%d.npy'%(self.mode,idx))
             cp_loss = np.load('data/depth18_gamma0.200000/pre/cp_loss_%s_%d.npy'%(self.mode,idx))
             mask = np.load('data/depth18_gamma0.200000/pre/mask_%s_%d.npy'%(self.mode,idx))
+            legal_mask = np.load('data/depth18_gamma0.200000/pre/legal_mask_%s_%d.npy'%(self.mode,idx))
 
             for j in range(len(cnn)):
-                yield torch.tensor(cnn[j], dtype=torch.float) ,torch.tensor(cp_loss[j], dtype=torch.float) ,torch.tensor(mask[j], dtype=torch.float)
+                yield torch.tensor(cnn[j], dtype=torch.float) ,torch.tensor(cp_loss[j], dtype=torch.float) ,torch.tensor(mask[j], dtype=torch.float), torch.tensor(legal_mask[j], dtype=torch.float)
 
 
     def __len__(self):

@@ -64,13 +64,13 @@ def multi_cross_entropy(predicted, target, mask, topn=5):
 
 
 def loss_fcn(predicted, target, mask):
-  mse = nn.functional.mse_loss(torch.flatten(predicted*mask),torch.flatten(target*mask*0.05),reduction='sum') / mask.sum()
-  hinge = (nn.functional.relu((predicted-target*0.05)*(1-mask))**2).sum() / (1-mask).sum()
+  #mse = nn.functional.mse_loss(torch.flatten(predicted*mask),torch.flatten(target*mask*0.05),reduction='sum') / mask.sum()
+  #hinge = (nn.functional.relu((predicted-target*0.05)*(1-mask))**2).sum() / (1-mask).sum()
   #cross_entropy = nn.functional.cross_entropy(predicted, target.argmax(dim=1),reduction='mean')
   #avg_cp_loss = -(nn.functional.softmax(predicted)*target).view(len(target),-1).sum(1).mean()
   #return avg_cp_loss
-  #m_cross_entropy = multi_cross_entropy(predicted, target, mask)
-  return mse + hinge 
+  m_cross_entropy = multi_cross_entropy(predicted, target, mask)
+  return m_cross_entropy
 
 total_batch_count = 0
 running_train_loss = None
@@ -81,16 +81,17 @@ def sum_grads(model):
 
 def validate_batch():
   global val_iter
-  x,c,m = None,None,None
+  x,c,m,l = None,None,None
   try:
-    x,c,m = next(val_iter)
+    x,c,m,l = next(val_iter)
   except:
     val_iter = iter(val_loader)
-    x,c,m = next(val_iter)
+    x,c,m,l = next(val_iter)
   
-  x,c,m = x.to(device),c.to(device),m.to(device)
+  x,c,m,l = x.to(device),c.to(device),m.to(device),l.to(device)
   model.eval()
   predicted = model(x)
+  predicted[l==0] = -float('inf')
   val_loss = loss_fcn(predicted,c,m)
   val_acc = (predicted.detach().argmax(dim=1) == (c+m).argmax(dim=1)).cpu().numpy().mean()
   min_cp_loss = (c[torch.arange(len(predicted)),predicted.detach().argmax(dim=1)].mean().cpu().numpy())
@@ -101,13 +102,14 @@ def validate_batch():
 def train():
   global total_batch_count
   global running_train_loss
-  for x,c,m in progressbar.progressbar(train_loader,max_value=len(trainset)//batch_size):
-    x,c,m = x.to(device),c.to(device),m.to(device)
+  for x,c,m,l in progressbar.progressbar(train_loader,max_value=len(trainset)//batch_size):
+    x,c,m,l = x.to(device),c.to(device),m.to(device),l.to(device)
     model.train()
     optimizer.zero_grad()
     #x,y = x.type(torch.float), y.type(torch.float)
 
     predicted = model(x)
+    predicted[l==0] = -float('inf')
     train_loss = loss_fcn(predicted,c,m)
     train_loss.backward()
     train_grad = sum_grads(model)
