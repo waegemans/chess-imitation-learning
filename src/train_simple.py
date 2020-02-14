@@ -117,6 +117,7 @@ def validate():
     samples += len(x)
   return (loss/samples)
 
+model.no_passes = 1
 for e in range(epochs):
   torch.save(model, log_dir+'model_ep%d.nn'%e)
   print ("Epoch %d of %d:"%(e,epochs))
@@ -128,7 +129,6 @@ for e in range(epochs):
   print(running_train_loss)
 
   scheduler.step(running_train_loss)
-  model.no_passes += 1
 
 torch.save(model, 'output/model_ep%d.nn'%epochs)
 

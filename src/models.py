@@ -201,12 +201,13 @@ class RecNN(nn.Module):
     return out.reshape((out.shape[0],-1))
 
 class MultiAttentionHead(nn.Module):
-  def __init__(self,query_dim,value_dim,q_in_dim,kv_in_dim,out_dim,n_groups):
+  def __init__(self,query_dim,value_dim,q_in_dim,kv_in_dim,n_groups):
     super(MultiAttentionHead,self).__init__()
     self.query_dim = query_dim
     self.value_dim = value_dim
     self.n_groups = n_groups
     self.inv_sqrt_dim = query_dim ** -.5
+    out_dim = q_in_dim
 
     self.query = nn.Linear(q_in_dim,self.query_dim*self.n_groups)
     self.key = nn.Linear(kv_in_dim,self.query_dim*self.n_groups)
@@ -234,6 +235,7 @@ class MultiAttentionHead(nn.Module):
     attention = attention.view(batch_size,self.n_groups,seq_size,self.value_dim).permute(0,2,3,1).reshape(batch_size,seq_size,-1)
 
     attention = self.project(attention)
+    attention += query
     attention = self.ln(attention)
 
     return attention, scores
@@ -256,15 +258,17 @@ class ffn(nn.Module):
 class Att_small(nn.Module):
   def __init__(self):
     super(Att_small,self).__init__()
-    self.m1 = MultiAttentionHead(64,64,71,71,64,8)
+    self.e = nn.Linear(71,64)
+    self.m1 = MultiAttentionHead(64,64,64,64,8)
     self.f1 = ffn(64,64)
-    self.m2 = MultiAttentionHead(64,64,64,64,64,8)
+    self.m2 = MultiAttentionHead(64,64,64,64,8)
     self.f2 = ffn(64,64)
     self.l1 = nn.Linear(64*32,256)
     self.l2 = nn.Linear(256,64*64)
 
   def forward(self,x):
-    out,_ = self.m1(x,x)
+    out = nn.functional.relu(self.e(x))
+    out,_ = self.m1(out,out)
     out = self.f1(out)
     out,_ = self.m2(out,out)
     out = self.f1(out)
