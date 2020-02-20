@@ -4,9 +4,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import sys
 import progressbar
-import data_util
 import git
 import os
 
@@ -27,15 +25,9 @@ os.mkdir(log_dir)
 
 log_file = open(log_dir+"out.csv", "w")
 
+#model = models.cnn_alpha_small().to(device)
 model = torch.load("output/0ab90067a02d8eb69c5aa4756eeed062d4872c5a/model_ep7.nn",map_location=device)
-#model = models.add_dropout_cnn(model.model)
 
-#freeze all but final layer
-#for child in list(model.model.children())[:-1]:
-#  for param in child.parameters():
-#    param.requires_grad = False
-
-#print(model)
 optimizer = optim.SGD(filter(lambda p: p.requires_grad, model.parameters()), lr=1e-3, momentum=.9)
 scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.67, patience=0, verbose=True, threshold=1e-2)
 
@@ -66,11 +58,11 @@ def multi_cross_entropy(predicted, target, mask, topn=5):
 def loss_fcn(predicted, target, mask):
   #mse = nn.functional.mse_loss(torch.flatten(predicted*mask),torch.flatten(target*mask*0.05),reduction='sum') / mask.sum()
   #hinge = (nn.functional.relu((predicted-target*0.05)*(1-mask))**2).sum() / (1-mask).sum()
-  #cross_entropy = nn.functional.cross_entropy(predicted, (target+mask).argmax(dim=1),reduction='mean')
+  cross_entropy = nn.functional.cross_entropy(predicted, (target+mask).argmax(dim=1),reduction='mean')
   #avg_cp_loss = -(nn.functional.softmax(predicted)*target).view(len(target),-1).sum(1).mean()
   #return avg_cp_loss
-  m_cross_entropy = multi_cross_entropy(predicted, target, mask)
-  return m_cross_entropy
+  #m_cross_entropy = multi_cross_entropy(predicted, target, mask)
+  return cross_entropy
 
 total_batch_count = 0
 running_train_loss = None
