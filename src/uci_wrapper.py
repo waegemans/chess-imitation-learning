@@ -204,7 +204,7 @@ go_cmp():
         t = torch.tensor(np.array([best,comp])).to(device)
         
         x = model(t).detach().cpu()
-        if x < 0:
+        if x[0] < 0:
             best_move = mv
     print(best_move.uci())
 
