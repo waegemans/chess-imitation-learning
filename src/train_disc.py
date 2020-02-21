@@ -36,7 +36,7 @@ trainset,valset = ChessMoveDataset_statevalue_it(discretize=True),ChessMoveDatas
 train_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=False, num_workers=8, drop_last=True)
 val_loader = torch.utils.data.DataLoader(valset, batch_size=batch_size, shuffle=False)
 val_iter = iter(val_loader)
-log_file.write("epoch,batch_count,train_mse_loss,val_mse_loss,train_grads\n")
+log_file.write("epoch,batch_count,train_cross_entropy_loss,val_cross_entropy_loss,train_acc,val_acc,train_grads\n")
 
 def multi_cross_entropy(predicted, target, mask, topn=5):
   loss = 0
@@ -50,6 +50,9 @@ def multi_cross_entropy(predicted, target, mask, topn=5):
 
 def loss_fcn(predicted, target):
   return nn.functional.cross_entropy(predicted,target)
+
+def acc_fnc(predicted,target):
+    return (predicted.detach().argmax(dim=1) == target).cpu().numpy().mean()
 
 total_batch_count = 0
 running_train_loss = None
@@ -71,8 +74,9 @@ def validate_batch():
   model.eval()
   predicted = model(x)
   val_loss = loss_fcn(predicted,y)
+  val_acc = acc_fnc(predicted,y)
 
-  return val_loss.detach().data.cpu().numpy()
+  return val_loss.detach().data.cpu().numpy(),val_acc
 
 
 def train():
@@ -86,16 +90,19 @@ def train():
 
     predicted = model(x)
     train_loss = loss_fcn(predicted,y)
+    train_acc = acc_fnc(predicted,y)
+    
     train_loss.backward()
     train_grad = sum_grads(model)
     optimizer.step()
 
     val_loss = ''
+    val_acc = ''
 
     if (total_batch_count % 10 == 0):
-      val_loss = validate_batch()
+      val_loss,val_acc = validate_batch()
 
-    log_file.write(','.join(map(str,[e,total_batch_count, train_loss.detach().data.cpu().numpy(), val_loss, train_grad]))+'\n')
+    log_file.write(','.join(map(str,[e,total_batch_count, train_loss.detach().data.cpu().numpy(), val_loss, train_acc,val_acc, train_grad]))+'\n')
     log_file.flush()
 
     total_batch_count += 1
