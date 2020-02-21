@@ -9,8 +9,10 @@ import models
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument('sample_type', type=str,
-                   help='how to choose random move', default='model')
+parser.add_argument('--model', type=str,
+                   help='model file')
+parser.add_argument('--model_type', type=str,
+                   default='siam')
 args = parser.parse_args()
 
 
@@ -22,7 +24,7 @@ board = chess.Board()
 n_par_games = 64
 
 
-model = torch.load("output/model.nn",map_location=device)
+model = torch.load(args.model,map_location=device)
 #model = models.cnn_bare()
 #model.to(device)
 model.eval()
@@ -55,9 +57,9 @@ def go():
     state = util.board_to_state(b)
     cnn = util.state_to_cnn(state)
 
-    y = model(torch.tensor(cnn,dtype=torch.float).unsqueeze(0)).detach()
+    y = model(torch.tensor(cnn,dtype=torch.float,device=device).unsqueeze(0)).detach()
     y = y - y.min()
-    y_masked = y.numpy() * util.movelist_to_actionmask(b.legal_moves)
+    y_masked = y.cpu().numpy() * util.movelist_to_actionmask(b.legal_moves)
     uci = util.action_to_uci(y_masked)
 
     if not board.turn:
@@ -187,6 +189,8 @@ def go_mcts():
         best_uci = np.random.choice(list(board.legal_moves)).uci()
 
     print("bestmove " + best_uci)
+
+
 def go_cmp():
     b = board
     
@@ -201,12 +205,12 @@ def go_cmp():
         comp = util.state_to_cnn(util.board_to_state(b))
         b.pop()
         
-        t = torch.tensor(np.array([best,comp]),torch.float).to(device)
+        t = torch.tensor(np.array([best,comp]),dtype=torch.float).to(device)
         
         x = model(t).detach().cpu()
         if x[0] < 0:
             best_move = mv
-    print(best_move.uci())
+    print("bestmove " + best_move.uci())
 
 
 #pool = Pool(processes=8)
@@ -223,7 +227,10 @@ while True:
     if x.split()[0].lower() == "position":
         position(x.split()[1:])
     if x.split()[0].lower() == "go":
-        go_cmp()
+        if args.model_type == 'siam':
+            go_cmp()
+        else:
+            go()
     if x.lower() == "quit":
         break
 logfile.close()
