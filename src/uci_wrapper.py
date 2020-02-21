@@ -187,7 +187,7 @@ def go_mcts():
         best_uci = np.random.choice(list(board.legal_moves)).uci()
 
     print("bestmove " + best_uci)
-go_cmp():
+def go_cmp():
     b = board
     
     legal_moves = list(b.legal_moves)
@@ -201,7 +201,7 @@ go_cmp():
         comp = util.state_to_cnn(util.board_to_state(b))
         b.pop()
         
-        t = torch.tensor(np.array([best,comp])).to(device)
+        t = torch.tensor(np.array([best,comp]),torch.float).to(device)
         
         x = model(t).detach().cpu()
         if x[0] < 0:
