@@ -83,7 +83,7 @@ class ChessMoveDataset_statevalue_it(torch.utils.data.IterableDataset):
             value = np.load('data/depth18_gamma0.200000/statevalue/pre/values_%s_%d.npy'%(self.mode,idx))
 
             for j in range(len(cnn)):
-                yield torch.tensor(cnn[j], dtype=torch.float) ,torch.tensor(value[j]/300, dtype=torch.float)
+                yield torch.tensor(cnn[j], dtype=torch.float) ,torch.tensor(value[j]/10000, dtype=torch.float)
 
     def __len__(self):
         return self.n_items
