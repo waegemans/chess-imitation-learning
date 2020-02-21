@@ -46,7 +46,7 @@ for e,b in zip(data['epoch'],data['batch_count']):
   prev_e = e
   ax[0].axvline(x=b, ymin=0.0, ymax=1.0, color='r', alpha=0.1)
   ax[1].axvline(x=b, ymin=0.0, ymax=1.0, color='r', alpha=0.1)
-ax[0].set_yscale('log')
+#ax[0].set_yscale('log')
 ax[1].legend(prop={'size': 6})
 ax[0].legend(prop={'size': 6})
 plt.show()

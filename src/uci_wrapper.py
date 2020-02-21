@@ -1,6 +1,6 @@
 import chess
 import torch
-import data_util
+import util
 from multiprocessing import Pool
 import numpy as np
 import time
@@ -22,9 +22,9 @@ board = chess.Board()
 n_par_games = 64
 
 
-#model = torch.load("output/model.nn",map_location=device)
-model = models.cnn_bare()
-model.to(device)
+model = torch.load("output/model.nn",map_location=device)
+#model = models.cnn_bare()
+#model.to(device)
 model.eval()
 
 def uci():
@@ -52,16 +52,16 @@ def go():
     b = board
     if not board.turn:
         b = board.mirror()
-    state = data_util.board_to_state(b)
-    cnn = data_util.state_to_cnn(state)
+    state = util.board_to_state(b)
+    cnn = util.state_to_cnn(state)
 
     y = model(torch.tensor(cnn,dtype=torch.float).unsqueeze(0)).detach()
     y = y - y.min()
-    y_masked = y.numpy() * data_util.movelist_to_actionmask(b.legal_moves)
-    uci = data_util.action_to_uci(y_masked)
+    y_masked = y.numpy() * util.movelist_to_actionmask(b.legal_moves)
+    uci = util.action_to_uci(y_masked)
 
     if not board.turn:
-        uci = data_util.flip_uci(uci)
+        uci = util.flip_uci(uci)
         
     try:
         board.push_uci(uci)
@@ -85,10 +85,10 @@ def random_move(boards,p_dict):
         #    p = p_dict[fen_without_count[i]]
         if not turn:
             b = b.mirror()
-        state = data_util.board_to_state(b)
-        cnn = data_util.state_to_cnn(state)
+        state = util.board_to_state(b)
+        cnn = util.state_to_cnn(state)
         cnn_t[i] = torch.tensor(cnn).to(device)
-        mask_t[i] = torch.tensor(data_util.movelist_to_actionmask(b.legal_moves),dtype=torch.float,device=device)
+        mask_t[i] = torch.tensor(util.movelist_to_actionmask(b.legal_moves),dtype=torch.float,device=device)
 
     y = model(cnn_t).detach()
     y_masked = torch.nn.functional.softmax(y, dim=1) * mask_t
@@ -101,10 +101,10 @@ def random_move(boards,p_dict):
         #p_dict[fen_without_count[i]] = p[i]
         idx = np.random.choice(64*64, p=p[i])
 
-        uci = data_util.idx_to_uci(idx)
+        uci = util.idx_to_uci(idx)
 
         if not b.turn:
-            uci = data_util.flip_uci(uci)
+            uci = util.flip_uci(uci)
 
         try:
             b.push_uci(uci)
@@ -187,7 +187,26 @@ def go_mcts():
         best_uci = np.random.choice(list(board.legal_moves)).uci()
 
     print("bestmove " + best_uci)
-
+go_cmp():
+    b = board
+    
+    legal_moves = list(b.legal_moves)
+    best_move = legal_moves[0]
+    
+    for mv in legal_moves[1:]:
+        b.push(best_move)
+        best = util.state_to_cnn(util.board_to_state(b))
+        b.pop()
+        b.push(mv)
+        comp = util.state_to_cnn(util.board_to_state(b))
+        b.pop()
+        
+        t = torch.tensor(np.array([best,comp])).to(device)
+        
+        x = model(t).detach().cpu()
+        if x < 0:
+            best_move = mv
+    print(best_move.uci())
 
 
 #pool = Pool(processes=8)
@@ -204,7 +223,7 @@ while True:
     if x.split()[0].lower() == "position":
         position(x.split()[1:])
     if x.split()[0].lower() == "go":
-        go_mcts()
+        go_cmp()
     if x.lower() == "quit":
         break
 logfile.close()
