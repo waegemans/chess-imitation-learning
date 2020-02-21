@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-
+import util
 from modules import cnn_res_block
 
 class cnn_alpha(nn.Module):
@@ -78,17 +78,47 @@ class cnn_value(nn.Module):
     super(cnn_value,self).__init__()
     self.fcn = fcn_small()
     self.lin = nn.Linear(64*64,1)
+    self.fc = nn.Sequential(
+        nn.Linear(64*64,128)
+        nn.ReLU(),
+        nn.Dropout(0.2),
+        nn.Linear(128,1)
+        )
+    
 
   def forward(self, x):
     out = self.fcn(x)
-    return self.lin(out.reshape((out.shape[0],-1))).squeeze(-1)
+    return self.fc(out.reshape((out.shape[0],-1))).squeeze(-1)
 
 class cnn_disc(nn.Module):
   def __init__(self):
     super(cnn_disc,self).__init__()
     self.fcn = fcn_small()
-    self.lin = nn.Linear(64*64,5)
+    self.fc = nn.Sequential(
+        nn.Linear(64*64,128)
+        nn.ReLU(),
+        nn.Dropout(0.2),
+        nn.Linear(128,1)
+        )
 
   def forward(self, x):
     out = self.fcn(x)
-    return self.lin(out.reshape((out.shape[0],-1)))
+    return self.fc(out.reshape((out.shape[0],-1)))
+
+class cnn_siam(nn.Module):
+  def __init__(self):
+    super(cnn_siam,self).__init__()
+    self.fcn = fcn_small()
+    self.fc1 = nn.Sequential(
+        nn.Linear(64*64,128)
+        nn.ReLU(),
+        nn.Dropout(0.2)
+        )
+    self.fc2 = nn.Linear(256,1)
+
+  def forward(self, x):
+    out = self.fcn(x)
+    out = self.fc(out.reshape((out.shape[0],-1)))
+    out = torch.cat((out,util.shift(out)),dim=1)
+    return self.fc2(out).squeeze(-1)
+
