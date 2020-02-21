@@ -54,7 +54,7 @@ def loss_fcn(predicted, target):
   return nn.functional.binary_cross_entropy_with_logits(predicted,((target-util.shift(target))>0).float())
 
 def acc_fnc(predicted,target):
-    return (predicted.detach().argmax(dim=1) == ((target-util.shift(target))>0).float()).cpu().numpy().mean()
+    return ((predicted>0) ^ ((target-util.shift(target))>0)).cpu().numpy().mean()
 
 total_batch_count = 0
 running_train_loss = None
