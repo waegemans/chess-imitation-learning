@@ -59,10 +59,8 @@ class cnn_alpha_small(nn.Module):
       out = self.model(x)
       return out.reshape((out.shape[0],-1))
 
-class cnn_value(nn.Module):
-  def __init__(self):
-    super(cnn_value,self).__init__()
-    self.fcn = nn.Sequential(
+def fcn_small():
+    return nn.Sequential(
           nn.Conv2d(17,256,kernel_size=3,padding=1),
           nn.BatchNorm2d(256),
           nn.ReLU(),
@@ -74,8 +72,23 @@ class cnn_value(nn.Module):
           nn.ReLU(),
           nn.Conv2d(256,64,kernel_size=1)
         )
+
+class cnn_value(nn.Module):
+  def __init__(self):
+    super(cnn_value,self).__init__()
+    self.fcn = fcn()
     self.lin = nn.Linear(64*64,1)
 
   def forward(self, x):
     out = self.fcn(x)
     return self.lin(out.reshape((out.shape[0],-1))).squeeze(-1)
+
+class cnn_disc(nn.Module):
+  def __init__(self):
+    super(cnn_value,self).__init__()
+    self.fcn = fcn()
+    self.lin = nn.Linear(64*64,5)
+
+  def forward(self, x):
+    out = self.fcn(x)
+    return self.lin(out.reshape((out.shape[0],-1)))

@@ -25,9 +25,11 @@ def to_state_value_csv():
 
 
 class ChessMoveDataset_statevalue_it(torch.utils.data.IterableDataset):
-    def __init__(self, mode='train', precompute=False):
+    def __init__(self, mode='train', precompute=False,discretize=False):
         super(ChessMoveDataset_statevalue_it,self).__init__()
         self.mode = mode
+        self.discretize = discretize
+        self.bins = [-5000,-100,100,5000]
         if precompute:
             self.precompute()
         else:
@@ -81,9 +83,13 @@ class ChessMoveDataset_statevalue_it(torch.utils.data.IterableDataset):
         for idx in it:
             cnn = np.load('data/depth18_gamma0.200000/statevalue/pre/cnn_%s_%d.npy'%(self.mode,idx))
             value = np.load('data/depth18_gamma0.200000/statevalue/pre/values_%s_%d.npy'%(self.mode,idx))
+            if self.discretize:
+                value = np.digitize(value,self.bins)
+            else:
+                value /= 10000
 
             for j in range(len(cnn)):
-                yield torch.tensor(cnn[j], dtype=torch.float) ,torch.tensor(value[j]/10000, dtype=torch.float)
+                yield torch.tensor(cnn[j], dtype=torch.float) ,torch.tensor(value[j], dtype=torch.float)
 
     def __len__(self):
         return self.n_items
