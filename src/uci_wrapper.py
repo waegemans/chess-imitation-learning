@@ -204,12 +204,13 @@ def go_cmp():
         b.push(mv)
         comp = util.state_to_cnn(util.board_to_state(b))
         b.pop()
-        
-        t = torch.tensor(np.array([best,comp]),dtype=torch.float).to(device)
-        
-        x = model(t).detach().cpu()
-        if x[0] < 0:
-            best_move = mv
+        with torch.no_grad():
+            model.train()
+            t = torch.tensor(np.array([best,comp]),dtype=torch.float).to(device)
+            x = model(t).detach().cpu()
+            
+            if x[0] < 0:
+                best_move = mv
     print("bestmove " + best_move.uci())
 
 
