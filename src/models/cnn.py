@@ -76,7 +76,7 @@ def fcn_small():
 class cnn_value(nn.Module):
   def __init__(self):
     super(cnn_value,self).__init__()
-    self.fcn = fcn()
+    self.fcn = fcn_small()
     self.lin = nn.Linear(64*64,1)
 
   def forward(self, x):
@@ -85,8 +85,8 @@ class cnn_value(nn.Module):
 
 class cnn_disc(nn.Module):
   def __init__(self):
-    super(cnn_value,self).__init__()
-    self.fcn = fcn()
+    super(cnn_disc,self).__init__()
+    self.fcn = fcn_small()
     self.lin = nn.Linear(64*64,5)
 
   def forward(self, x):

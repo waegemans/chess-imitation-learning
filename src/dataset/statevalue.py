@@ -89,7 +89,7 @@ class ChessMoveDataset_statevalue_it(torch.utils.data.IterableDataset):
                 value /= 10000
 
             for j in range(len(cnn)):
-                yield torch.tensor(cnn[j], dtype=torch.float) ,torch.tensor(value[j], dtype=torch.float)
+                yield torch.tensor(cnn[j], dtype=torch.float) ,torch.tensor(value[j], dtype=(torch.float,torch.long)[self.discretize])
 
     def __len__(self):
         return self.n_items
