@@ -86,7 +86,7 @@ class ChessMoveDataset_statevalue_it(torch.utils.data.IterableDataset):
             if self.discretize:
                 value = np.digitize(value,self.bins)
             else:
-                value /= 10000
+                value = value/10000.
 
             for j in range(len(cnn)):
                 yield torch.tensor(cnn[j], dtype=torch.float) ,torch.tensor(value[j], dtype=(torch.float,torch.long)[self.discretize])
