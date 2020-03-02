@@ -55,7 +55,7 @@ total_batch_count = 0
 running_train_loss = None
 
 def sum_grads(model):
-  train_params = filter(lambda p: p.requires_grad, model.parameters())
+  train_params = filter(lambda p: p.requires_grad and p.grad is not None, model.parameters())
   return sum(ti.grad.detach().cpu().abs().sum().numpy() for ti in train_params)
 
 def validate_batch():
