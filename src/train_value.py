@@ -49,7 +49,7 @@ def multi_cross_entropy(predicted, target, mask, topn=5):
 
 
 def loss_fcn(predicted, target):
-  return nn.functional.mse_loss(predicted,target)
+  return nn.functional.l1_loss(predicted,target)
 
 total_batch_count = 0
 running_train_loss = None
