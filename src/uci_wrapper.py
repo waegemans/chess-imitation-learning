@@ -79,7 +79,7 @@ def go_buckets():
     if not board.turn:
         b = board.mirror()
 
-    moves = list(board.legal_moves)
+    moves = list(b.legal_moves)
     cnn = []
     for mv in moves:
         b.push(mv)
