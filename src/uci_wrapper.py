@@ -88,7 +88,7 @@ def go_buckets():
         b.pop()
 
     y = model(torch.tensor(cnn,dtype=torch.float,device=device)).detach()
-    idx = y.argmax(y,dim=1).argmax(dim=0).cpu().numpy()
+    idx = y.argmax(dim=1).argmax(dim=0).cpu().numpy()
 
     uci = moves[idx].uci()
 
