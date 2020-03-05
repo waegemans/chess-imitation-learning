@@ -73,7 +73,7 @@ def go():
     
     print("bestmove " + uci)
 
-def go_buckets():
+def go_state(mode='buckets'):
     global board
     b = board
     if not board.turn:
@@ -89,7 +89,11 @@ def go_buckets():
     model.train()
     with torch.no_grad():
         y = model(torch.tensor(cnn,dtype=torch.float,device=device)).detach()
-        idx = y.argmax(dim=1).argmax(dim=0).cpu().numpy()
+        idx = 0
+        if mode is 'buckets':
+            idx = y.argmax(dim=1).argmax(dim=0).cpu().numpy()
+        elif mode is 'value':
+            idx = y.argmax().cpu().numpy()
 
         uci = moves[idx].uci()
 
@@ -256,7 +260,9 @@ while True:
         if args.model_type == 'siam':
             go_cmp()
         elif args.model_type == 'buckets':
-            go_buckets()
+            go_state(mode='buckets')
+        elif args.model_type == 'value':
+            go_state(mode='value')
         else:
             go()
     if x.lower() == "quit":
