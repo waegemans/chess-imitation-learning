@@ -29,7 +29,7 @@ class ChessMoveDataset_statevalue_it(torch.utils.data.IterableDataset):
         super(ChessMoveDataset_statevalue_it,self).__init__()
         self.mode = mode
         self.discretize = discretize
-        self.bins = [-5000,-100,100,5000]
+        self.bins = [-9000, -4191, -1086, -444, -21, 21, 444, 1086, 4191, 9000]
         if precompute:
             self.precompute()
         else:

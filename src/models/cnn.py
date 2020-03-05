@@ -98,7 +98,7 @@ class cnn_disc(nn.Module):
         nn.Linear(64*64,128),
         nn.ReLU(),
         nn.Dropout(0.2),
-        nn.Linear(128,1)
+        nn.Linear(128,11)
         )
 
   def forward(self, x):
