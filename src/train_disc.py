@@ -62,21 +62,21 @@ def sum_grads(model):
   return sum(ti.grad.detach().cpu().abs().sum().numpy() for ti in train_params)
 
 def validate_batch():
-  global val_iter
-  x,y = None,None
-  try:
-    x,y = next(val_iter)
-  except:
-    val_iter = iter(val_loader)
-    x,y = next(val_iter)
-  
-  x,y = x.to(device),y.to(device)
-  model.eval()
-  predicted = model(x)
-  val_loss = loss_fcn(predicted,y)
-  val_acc = acc_fnc(predicted,y)
+  with torch.no_grad():
+    global val_iter
+    x,y = None,None
+    try:
+      x,y = next(val_iter)
+    except:
+      val_iter = iter(val_loader)
+      x,y = next(val_iter)
+    
+    x,y = x.to(device),y.to(device)
+    predicted = model(x)
+    val_loss = loss_fcn(predicted,y)
+    val_acc = acc_fnc(predicted,y)
 
-  return val_loss.detach().data.cpu().numpy(),val_acc
+    return val_loss.detach().data.cpu().numpy(),val_acc
 
 
 def train():

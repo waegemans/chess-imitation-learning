@@ -73,6 +73,30 @@ def go():
     
     print("bestmove " + uci)
 
+def go_buckets():
+    global board
+    b = board
+    if not board.turn:
+        b = board.mirror()
+
+    moves = list(board.legal_moves)
+    cnn = []
+    for mv in moves:
+        b.push(mv)
+        state = util.board_to_state(b)
+        cnn.append(util.state_to_cnn(state))
+        b.pop()
+
+    y = model(torch.tensor(cnn,dtype=torch.float,device=device)).detach()
+    idx = y.argmax(y,dim=1).argmax(dim=0).cpu().numpy()
+
+    uci = moves[idx].uci()
+
+    if not board.turn:
+        uci = util.flip_uci(uci)
+    
+    print("bestmove " + uci)
+
 def random_move(boards,p_dict):
     if args.sample_type == 'random':
         return [np.random.choice(list(b.legal_moves)).uci() for b in boards]
@@ -230,6 +254,8 @@ while True:
     if x.split()[0].lower() == "go":
         if args.model_type == 'siam':
             go_cmp()
+        elif args.model_type == 'buckets':
+            go_buckets()
         else:
             go()
     if x.lower() == "quit":
