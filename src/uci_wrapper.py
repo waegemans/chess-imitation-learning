@@ -86,16 +86,17 @@ def go_buckets():
         state = util.board_to_state(b)
         cnn.append(util.state_to_cnn(state))
         b.pop()
+    model.train()
+    with torch.no_grad():
+        y = model(torch.tensor(cnn,dtype=torch.float,device=device)).detach()
+        idx = y.argmax(dim=1).argmax(dim=0).cpu().numpy()
 
-    y = model(torch.tensor(cnn,dtype=torch.float,device=device)).detach()
-    idx = y.argmax(dim=1).argmax(dim=0).cpu().numpy()
+        uci = moves[idx].uci()
 
-    uci = moves[idx].uci()
-
-    if not board.turn:
-        uci = util.flip_uci(uci)
-    
-    print("bestmove " + uci)
+        if not board.turn:
+            uci = util.flip_uci(uci)
+        
+        print("bestmove " + uci)
 
 def random_move(boards,p_dict):
     if args.sample_type == 'random':
