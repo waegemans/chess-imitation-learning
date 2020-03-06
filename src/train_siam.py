@@ -30,7 +30,7 @@ model = models.cnn_siam().to(device)
 optimizer = optim.SGD(filter(lambda p: p.requires_grad, model.parameters()), lr=1e-3, momentum=.9)
 scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.67, patience=0, verbose=True, threshold=1e-2)
 
-trainset,valset = ChessMoveDataset_statevalue_it(),ChessMoveDataset_statevalue_it(mode='val')
+trainset,valset = ChessMoveDataset_statevalue_it(discretize=True),ChessMoveDataset_statevalue_it(discretize=True,mode='val')
 
 train_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=False, num_workers=8, drop_last=True)
 val_loader = torch.utils.data.DataLoader(valset, batch_size=batch_size, shuffle=False)
