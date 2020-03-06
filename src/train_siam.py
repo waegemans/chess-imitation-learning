@@ -12,9 +12,6 @@ import util
 import chess
 import chess.engine
 
-def shift(x):
-    return torch.cat((x[-1:],x[:-1]))
-
 device = ('cuda:0' if torch.cuda.is_available() and torch.cuda.device_count() > 0 else 'cpu')
 epochs = 1000
 batch_size = 1<<10
@@ -54,7 +51,7 @@ def loss_fcn(predicted, target):
   return nn.functional.binary_cross_entropy_with_logits(predicted,((target-util.shift(target))>0).float())
 
 def acc_fnc(predicted,target):
-    return ((predicted>0) ^ ((target-util.shift(target))>0)).cpu().numpy().mean()
+    return ((predicted>0) == ((target-util.shift(target))>0)).cpu().numpy().mean()
 
 total_batch_count = 0
 running_train_loss = None
