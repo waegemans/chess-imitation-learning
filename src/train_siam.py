@@ -48,7 +48,7 @@ def multi_cross_entropy(predicted, target, mask, topn=5):
 
 
 def loss_fcn(predicted, target):
-  return nn.functional.binary_cross_entropy_with_logits(predicted,((target-util.shift(target))>0).float())
+  return nn.functional.l1_loss(predicted,((target-util.shift(target))>0).float())
 
 def acc_fnc(predicted,target):
     return ((predicted>0) == ((target-util.shift(target))>0)).cpu().numpy().mean()
