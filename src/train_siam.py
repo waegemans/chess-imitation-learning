@@ -83,6 +83,9 @@ def train():
   global running_train_loss
   for x,y in progressbar.progressbar(train_loader,max_value=len(trainset)//batch_size):
     x,y = x.to(device),y.to(device)
+    perm = torch.randperm(x.size(0))
+    x = x[perm]
+    y = y[perm]
     model.train()
     optimizer.zero_grad()
     #x,y = x.type(torch.float), y.type(torch.float)
