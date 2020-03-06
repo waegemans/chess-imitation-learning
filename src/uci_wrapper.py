@@ -226,20 +226,24 @@ def go_cmp():
     legal_moves = list(b.legal_moves)
     best_move = legal_moves[0]
     
-    for mv in legal_moves[1:]:
-        b.push(best_move)
-        best = util.state_to_cnn(util.board_to_state(b))
-        b.pop()
-        b.push(mv)
-        comp = util.state_to_cnn(util.board_to_state(b))
-        b.pop()
-        with torch.no_grad():
-            model.train()
-            t = torch.tensor(np.array([best,comp]),dtype=torch.float).to(device)
-            x = model(t).detach().cpu()
-            
-            if x[0] < 0:
-                best_move = mv
+    for i in range(5):
+        for mv in legal_moves:
+            if mv is best_move:
+                continue
+            b.push(best_move)
+            best = util.state_to_cnn(util.board_to_state(b))
+            b.pop()
+            b.push(mv)
+            comp = util.state_to_cnn(util.board_to_state(b))
+            b.pop()
+            with torch.no_grad():
+                model.train()
+                t = torch.tensor(np.array([best,comp]),dtype=torch.float).to(device)
+                x = model(t).detach().cpu()
+                
+                if x[0].argmax() < 10:
+                    best_move = mv
+        
     print("bestmove " + best_move.uci())
 
 
