@@ -48,10 +48,10 @@ def multi_cross_entropy(predicted, target, mask, topn=5):
 
 
 def loss_fcn(predicted, target):
-  return nn.functional.l1_loss(predicted,(target-util.shift(target)).float())
+  return nn.functional.cross_entropy(predicted,(10+target-util.shift(target)).float())
 
 def acc_fnc(predicted,target):
-    return ((predicted>0) == ((target-util.shift(target))>0)).cpu().numpy().mean()
+    return ((predicted.argmax(dim=1)) == ((10+target-util.shift(target)))).cpu().numpy().mean()
 
 total_batch_count = 0
 running_train_loss = None

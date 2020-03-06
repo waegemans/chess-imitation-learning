@@ -114,7 +114,7 @@ class cnn_siam(nn.Module):
         nn.ReLU(),
         nn.Dropout(0.2)
         )
-    self.fc2 = nn.Linear(256,1)
+    self.fc2 = nn.Linear(256,21)
 
   def forward(self, x):
     out = self.fcn(x)
