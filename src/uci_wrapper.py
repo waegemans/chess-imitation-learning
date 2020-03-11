@@ -247,10 +247,10 @@ def go_cmp():
                     best_move = mv
     uci = best_move.uci()
 
-    if not board.turn:
-        uci = util.flip_uci(uci)
+        if not board.turn:
+            uci = util.flip_uci(uci)
         
-    print("bestmove " + best_move.uci())
+    print("bestmove " + uci)
 
 
 #pool = Pool(processes=8)
