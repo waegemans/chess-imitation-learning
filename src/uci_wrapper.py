@@ -245,6 +245,10 @@ def go_cmp():
                 
                 if x[0].argmax() < 10:
                     best_move = mv
+    uci = best_move.uci()
+
+    if not board.turn:
+        uci = util.flip_uci(uci)
         
     print("bestmove " + best_move.uci())
 
