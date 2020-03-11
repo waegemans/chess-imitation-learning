@@ -222,11 +222,13 @@ def go_mcts():
 
 def go_cmp():
     b = board
+    if not b.turn :
+        b = b.mirror()
     
     legal_moves = list(b.legal_moves)
     best_move = legal_moves[0]
     
-    for i in range(5):
+    for _ in range(5):
         for mv in legal_moves:
             if mv is best_move:
                 continue
