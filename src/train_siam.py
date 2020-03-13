@@ -30,7 +30,7 @@ model = models.cnn_siam_bin().to(device)
 optimizer = optim.SGD(filter(lambda p: p.requires_grad, model.parameters()), lr=1e-3, momentum=.9)
 scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.67, patience=0, verbose=True, threshold=1e-2)
 
-trainset,valset = ChessMoveDataset_statevalue_it(discretize=True),ChessMoveDataset_statevalue_it(mode='val',discretize=True)
+trainset,valset = ChessMoveDataset_statevalue_it(discretize=False),ChessMoveDataset_statevalue_it(mode='val',discretize=False)
 
 train_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=False, num_workers=8, drop_last=True)
 val_loader = torch.utils.data.DataLoader(valset, batch_size=batch_size, shuffle=False)
@@ -52,7 +52,7 @@ def loss_fcn(predicted, target):
   #return nn.functional.cross_entropy(predicted,(10+target-util.shift(target)).long())
 
 def acc_fnc(predicted,target):
-    return ((predicted < 0) == (target < util.shift(target))).cpu().numpy().mean()
+    return ((predicted > 0) == (target < util.shift(target))).cpu().numpy().mean()
 
 total_batch_count = 0
 running_train_loss = None
@@ -85,7 +85,7 @@ def train():
   for x,y in progressbar.progressbar(train_loader,max_value=len(trainset)//batch_size):
     x,y = x.to(device),y.to(device)
     #perm = torch.randperm(x.size(0))
-    perm = y.argsort()
+    perm = y.argsort(descending=np.random.randn()<0)
     x = x[perm]
     y = y[perm]
     model.train()
