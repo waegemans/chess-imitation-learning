@@ -24,7 +24,7 @@ os.mkdir(log_dir)
 
 log_file = open(log_dir+"out.csv", "w")
 
-model = models.cnn_siam().to(device)
+model = models.cnn_siam_bin().to(device)
 #model = torch.load("output/0ab90067a02d8eb69c5aa4756eeed062d4872c5a/model_ep7.nn",map_location=device)
 
 optimizer = optim.SGD(filter(lambda p: p.requires_grad, model.parameters()), lr=1e-3, momentum=.9)
@@ -48,10 +48,11 @@ def multi_cross_entropy(predicted, target, mask, topn=5):
 
 
 def loss_fcn(predicted, target):
-  return nn.functional.cross_entropy(predicted,(10+target-util.shift(target)).long())
+  return nn.functional.binary_cross_entropy_with_logits(predicted,(target < util.shift(target)).float())
+  #return nn.functional.cross_entropy(predicted,(10+target-util.shift(target)).long())
 
 def acc_fnc(predicted,target):
-    return ((predicted.argmax(dim=1)) == (10+target-util.shift(target))).cpu().numpy().mean()
+    return ((predicted < 0) == (target < util.shift(target))).cpu().numpy().mean()
 
 total_batch_count = 0
 running_train_loss = None
@@ -83,7 +84,8 @@ def train():
   global running_train_loss
   for x,y in progressbar.progressbar(train_loader,max_value=len(trainset)//batch_size):
     x,y = x.to(device),y.to(device)
-    perm = torch.randperm(x.size(0))
+    #perm = torch.randperm(x.size(0))
+    perm = y.argsort()
     x = x[perm]
     y = y[perm]
     model.train()

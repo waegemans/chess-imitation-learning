@@ -121,4 +121,22 @@ class cnn_siam(nn.Module):
     out = self.fc1(out.reshape((out.shape[0],-1)))
     out = torch.cat((out,util.shift(out)),dim=1)
     return self.fc2(out).squeeze(-1)
+  
+
+class cnn_siam_bin(nn.Module):
+  def __init__(self):
+    super(cnn_siam_bin,self).__init__()
+    self.fcn = fcn_small()
+    self.fc1 = nn.Sequential(
+        nn.Linear(64*64,128),
+        nn.ReLU(),
+        nn.Dropout(0.2)
+        )
+    self.fc2 = nn.Linear(256,1)
+
+  def forward(self, x):
+    out = self.fcn(x)
+    out = self.fc1(out.reshape((out.shape[0],-1)))
+    out = torch.cat((out,util.shift(out)),dim=1)
+    return self.fc2(out).squeeze(-1)
 
