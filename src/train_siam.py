@@ -86,7 +86,7 @@ def train():
     x,y = x.to(device),y.to(device)
     #perm = torch.randperm(x.size(0))
     bins = [-.9000, -.4191, -.1086, -.0444, -.0021, .0021, .0444, .1086, .4191, .9000]
-    y_d = np.digitize(y.numpy(),bins)
+    y_d = np.digitize(y.cpu().numpy(),bins)
     perm = y_d.argsort()
     if np.random.randn() < 0:
       perm = perm[::-1].copy()
