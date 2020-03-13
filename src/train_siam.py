@@ -85,7 +85,13 @@ def train():
   for x,y in progressbar.progressbar(train_loader,max_value=len(trainset)//batch_size):
     x,y = x.to(device),y.to(device)
     #perm = torch.randperm(x.size(0))
-    perm = y.argsort(descending=np.random.randn()<0)
+    bins = [-.9000, -.4191, -.1086, -.0444, -.0021, .0021, .0444, .1086, .4191, .9000]
+    y_d = np.digitize(y.numpy(),bins)
+    perm = y_d.argsort()
+    if np.random.randn() < 0:
+      perm = perm[::-1].copy()
+    perm = torch.tensor(perm)
+    #perm = y.argsort(descending=np.random.randn()<0)
     x = x[perm]
     y = y[perm]
     model.train()
