@@ -220,7 +220,7 @@ def go_mcts():
     print("bestmove " + best_uci)
 
 
-def go_cmp():
+def go_cmp(binary=False):
     b = board
     if not b.turn :
         b = b.mirror()
@@ -243,7 +243,9 @@ def go_cmp():
                 t = torch.tensor(np.array([best,comp]),dtype=torch.float).to(device)
                 x = model(t).detach().cpu()
                 
-                if x[0].argmax() < 10:
+                if not binary and x[0].argmax() < 10:
+                    best_move = mv
+                elif binary and x[0] < 0:
                     best_move = mv
     uci = best_move.uci()
 
@@ -269,6 +271,8 @@ while True:
     if x.split()[0].lower() == "go":
         if args.model_type == 'siam':
             go_cmp()
+        if args.model_type == 'siambinary':
+            go_cmp(True)
         elif args.model_type == 'buckets':
             go_state(mode='buckets')
         elif args.model_type == 'value':
