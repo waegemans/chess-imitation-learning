@@ -45,23 +45,29 @@ val_loader = torch.utils.data.DataLoader(valset, batch_size=batch_size, shuffle=
 val_iter = iter(val_loader)
 log_file.write("epoch,batch_count,train_cross_entropy_loss,val_cross_entropy_loss,train_acc,val_acc,train_grads,train_min_cp,val_min_cp\n")
 
-def multi_cross_entropy(predicted, target, mask, topn=5):
+def multi_cross_entropy(predicted, target, mask, legal, topn=5):
+  mtarget = torch.masked_fill(target,legal==0,-float('inf'))
+  ptarget = nn.functional.softmax(mtarget,dim=1)
+  ctarget = torch.multinomial(ptarget,1).squeeze(1)
+  return nn.functional.cross_entropy(predicted,ctarget.to(device))
+  '''
   loss = 0
   midx = np.argpartition(-(target+mask).cpu().numpy(),topn)[:,:topn]
   w = torch.nn.functional.softmax(torch.tensor(np.take_along_axis(target.cpu().numpy(),midx,axis=1),device=device), dim=1)
   for i in range(topn):
     loss += (w[:,i]* nn.functional.cross_entropy(predicted, torch.tensor(midx[:,i],device=device),reduction='none')).mean()
   return loss
+  '''
 
 
 
-def loss_fcn(predicted, target, mask):
+def loss_fcn(predicted, target, mask, legal):
   #mse = nn.functional.mse_loss(torch.flatten(predicted*mask),torch.flatten(target*mask*0.05),reduction='sum') / mask.sum()
   #hinge = (nn.functional.relu((predicted-target*0.05)*(1-mask))**2).sum() / (1-mask).sum()
   cross_entropy = nn.functional.cross_entropy(predicted, (target+mask).argmax(dim=1),reduction='mean')
   #avg_cp_loss = -(nn.functional.softmax(predicted)*target).view(len(target),-1).sum(1).mean()
   #return avg_cp_loss
-  #m_cross_entropy = multi_cross_entropy(predicted, target, mask)
+  #m_cross_entropy = multi_cross_entropy(predicted, target, mask, legal)
   return cross_entropy
 
 total_batch_count = 0
@@ -84,7 +90,7 @@ def validate_batch():
   model.eval()
   predicted = model(x)
   predicted = predicted.masked_fill(l==0,-float('inf'))
-  val_loss = loss_fcn(predicted,c,m)
+  val_loss = loss_fcn(predicted,c,m,l)
   val_acc = (predicted.detach().argmax(dim=1) == (c+m).argmax(dim=1)).cpu().numpy().mean()
   min_cp_loss = (c[torch.arange(len(predicted)),predicted.detach().argmax(dim=1)].mean().cpu().numpy())
 
@@ -102,7 +108,7 @@ def train():
 
     predicted = model(x)
     predicted = predicted.masked_fill(l==0,-float('inf'))
-    train_loss = loss_fcn(predicted,c,m)
+    train_loss = loss_fcn(predicted,c,m,l)
     train_loss.backward()
     train_grad = sum_grads(model)
     optimizer.step()
