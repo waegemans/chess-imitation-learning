@@ -45,11 +45,18 @@ val_loader = torch.utils.data.DataLoader(valset, batch_size=batch_size, shuffle=
 val_iter = iter(val_loader)
 log_file.write("epoch,batch_count,train_cross_entropy_loss,val_cross_entropy_loss,train_acc,val_acc,train_grads,train_min_cp,val_min_cp\n")
 
-def multi_cross_entropy(predicted, target, mask, legal, topn=5):
+def multi_cross_entropy(predicted, target, mask, legal):
+  # maximum number of legal moves this batch
+  maxlegal = legal.sum(dim=1).max()
   mtarget = torch.masked_fill(target,legal==0,-float('inf'))
   ptarget = nn.functional.softmax(mtarget,dim=1)
-  ctarget = torch.multinomial(ptarget,1).squeeze(1)
-  return nn.functional.cross_entropy(predicted,ctarget.to(device))
+  val,idx = ptarget.sort()
+  # discard all non legal moves
+  best_val,best_idx = val[:,-maxlegal:],idx[:,-maxlegal:]
+  loss = 0
+  for i in range(maxlegal):
+    loss += (best_val[:,i]*nn.functional.cross_entropy(predicted,best_idx[:,i],reduction='none')).mean()
+  return loss
   '''
   loss = 0
   midx = np.argpartition(-(target+mask).cpu().numpy(),topn)[:,:topn]
