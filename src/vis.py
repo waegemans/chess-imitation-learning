@@ -45,6 +45,16 @@ ax[1].plot(y,x,label='Training acc', color='blue')
 x,y = smooth_window(vdata['val_acc'],vdata['batch_count'])
 ax[1].plot(y,x,label='Validation acc', color='orange')
 
+if 'train_1cp_acc' in data.keys():
+  ax[1].plot(data['batch_count'],data['train_1cp_acc'], color='cyan', alpha=0.1)
+  ax[1].plot(vdata['batch_count'],vdata['val_1cp_acc'], color='salmon', alpha=0.1)
+
+  x,y = smooth_window(data['train_1cp_acc'],data['batch_count'])
+  ax[1].plot(y,x,label='Training acc', color='cyan')
+  x,y = smooth_window(vdata['val_1cp_acc'],vdata['batch_count'])
+  ax[1].plot(y,x,label='Validation acc', color='salmon')
+
+
 ax[2].plot(data['batch_count'],data['train_grads'], color='blue', alpha=0.1)
 x,y = smooth_window(data['train_grads'],data['batch_count'])
 ax[2].plot(y,x,label='Training grads', color='blue')

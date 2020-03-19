@@ -43,12 +43,12 @@ trainset,valset = ChessMoveDataset_cp_it(),ChessMoveDataset_cp_it(mode='val')
 train_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=False, num_workers=8, drop_last=True)
 val_loader = torch.utils.data.DataLoader(valset, batch_size=batch_size, shuffle=False)
 val_iter = iter(val_loader)
-log_file.write("epoch,batch_count,train_cross_entropy_loss,val_cross_entropy_loss,train_acc,val_acc,train_grads,train_min_cp,val_min_cp\n")
+log_file.write("epoch,batch_count,train_cross_entropy_loss,val_cross_entropy_loss,train_acc,val_acc,train_grads,train_min_cp,val_min_cp,train_1cp_acc,val_1cp_acc\n")
 
 def multi_cross_entropy(predicted, target, mask, legal):
   # maximum number of legal moves this batch
-  maxlegal = legal.sum(dim=1).max()
-  mtarget = torch.masked_fill(target,legal==0,-float('inf'))
+  maxlegal = (legal*mask).sum(dim=1).max()
+  mtarget = torch.masked_fill(target,(legal==0)&(mask==0),-float('inf'))
   ptarget = nn.functional.softmax(mtarget,dim=1)
   val,idx = ptarget.sort()
   # discard all non legal moves
@@ -84,6 +84,15 @@ def sum_grads(model):
   train_params = filter(lambda p: p.requires_grad, model.parameters())
   return sum(ti.grad.detach().cpu().abs().sum().numpy() for ti in train_params)
 
+def acc_fnc(predicted,cplosses,mask):
+ return (predicted.argmax(dim=1) == (cplosses+mask).argmax(dim=1)).cpu().numpy().mean()
+
+def min_cp_loss_fnc(predicted,cplosses):
+  return cplosses[torch.arange(predicted.size(0)),predicted.argmax(dim=1)].mean().cpu().numpy()
+
+def top_1cp_acc_fnc(predicted,cplosses):
+  return (cplosses[torch.arange(predicted.size(0)),predicted.argmax(dim=1)] > -1).float().mean().cpu().numpy()
+
 def validate_batch():
   global val_iter
   x,c,m,l = None,None,None,None
@@ -98,10 +107,11 @@ def validate_batch():
   predicted = model(x)
   predicted = predicted.masked_fill(l==0,-float('inf'))
   val_loss = loss_fcn(predicted,c,m,l)
-  val_acc = (predicted.detach().argmax(dim=1) == (c+m).argmax(dim=1)).cpu().numpy().mean()
-  min_cp_loss = (c[torch.arange(len(predicted)),predicted.detach().argmax(dim=1)].mean().cpu().numpy())
+  val_acc = acc_fnc(predicted.detach(),c,m)
+  min_cp_loss = min_cp_loss_fnc(predicted.detach(),c)
+  top_1cp_acc = top_1cp_acc_fnc(predicted.detach(),c)
 
-  return val_loss.detach().data.cpu().numpy(), val_acc, min_cp_loss
+  return val_loss.detach().data.cpu().numpy(), val_acc, min_cp_loss, top_1cp_acc
 
 
 def train():
@@ -120,16 +130,18 @@ def train():
     train_grad = sum_grads(model)
     optimizer.step()
 
-    train_acc = (predicted.detach().argmax(dim=1) == (c+m).argmax(dim=1)).cpu().numpy().mean()
-    min_cp_loss = (c[torch.arange(len(predicted)),predicted.detach().argmax(dim=1)].mean().cpu().numpy())
+    train_acc = acc_fnc(predicted.detach(),c,m)
+    train_min_cp_loss = min_cp_loss_fnc(predicted.detach(),c)
+    train_top_1cp_acc = top_1cp_acc_fnc(predicted.detach(),c)
     val_loss = ''
     val_acc = ''
     val_min_cp_loss = ''
+    val_top_1cp_acc = ''
 
     if (total_batch_count % 10 == 0):
-      val_loss,val_acc, val_min_cp_loss = validate_batch()
+      val_loss,val_acc, val_min_cp_loss, val_top_1cp_acc = validate_batch()
 
-    log_file.write(','.join(map(str,[e,total_batch_count, train_loss.detach().data.cpu().numpy(), val_loss, train_acc, val_acc, train_grad, min_cp_loss, val_min_cp_loss]))+'\n')
+    log_file.write(','.join(map(str,[e,total_batch_count, train_loss.detach().data.cpu().numpy(), val_loss, train_acc, val_acc, train_grad, train_min_cp_loss, val_min_cp_loss, train_top_1cp_acc, val_top_1cp_acc]))+'\n')
     log_file.flush()
 
     total_batch_count += 1
