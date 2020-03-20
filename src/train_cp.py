@@ -13,6 +13,14 @@ import chess.engine
 
 
 
+def init_weights(m):
+  if type(m) == nn.Linear:
+    torch.nn.init.xavier_normal_(m.weight,2**0.5)
+    m.bias.data.fill_(0.01)
+  if type(m) == nn.Conv2d or type(m) == nn.ConvTranspose2d:
+    torch.nn.init.xavier_normal_(m.weight,2**0.5)
+    m.bias.data.fill_(0.01)
+
 device = ('cuda:0' if torch.cuda.is_available() and torch.cuda.device_count() > 0 else 'cpu')
 epochs = 1000
 batch_size = 1<<10
@@ -25,10 +33,11 @@ os.mkdir(log_dir)
 
 log_file = open(log_dir+"out.csv", "w")
 
-model = models.cnn_alpha().to(device)
+model = models.unet_simple().to(device)
+model.apply(init_weights)
 #model = torch.load("output/0ab90067a02d8eb69c5aa4756eeed062d4872c5a/model_ep7.nn",map_location=device)
 
-optimizer = optim.SGD(filter(lambda p: p.requires_grad, model.parameters()), lr=1e-3, momentum=.9)
+optimizer = optim.SGD(filter(lambda p: p.requires_grad, model.parameters()), lr=1e-0, momentum=.9)
 scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.67, patience=0, verbose=True, threshold=1e-2)
 
 '''
@@ -41,7 +50,7 @@ trainset,valset = torch.utils.data.random_split(ds,[len(ds)-valn,valn])
 trainset,valset = ChessMoveDataset_cp_it(),ChessMoveDataset_cp_it(mode='val')
 
 train_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=False, num_workers=8, drop_last=True)
-val_loader = torch.utils.data.DataLoader(valset, batch_size=batch_size, shuffle=False)
+val_loader = torch.utils.data.DataLoader(valset, batch_size=batch_size, shuffle=False, drop_last=True)
 val_iter = iter(val_loader)
 log_file.write("epoch,batch_count,train_cross_entropy_loss,val_cross_entropy_loss,train_acc,val_acc,train_grads,train_min_cp,val_min_cp,train_1cp_acc,val_1cp_acc\n")
 
@@ -151,15 +160,8 @@ def train():
     
 
 def validate():
-  samples = 0
-  loss = 0
-  for x,c,m in progressbar.progressbar(val_loader):
-    x,c,m = x.to(device),c.to(device),m.to(device)
-    model.eval()
-    predicted = model(x).detach()
-    loss += loss_fcn(predicted,c,m)
-    samples += len(x)
-  return (loss/samples)
+  with torch.no_grad:
+    pass
 
 for e in range(epochs):
   torch.save(model, log_dir+'model_ep%d.nn'%e)

@@ -245,7 +245,7 @@ def go_cmp(binary=False):
                 
                 if not binary and x[0].argmax() < 10:
                     best_move = mv
-                elif binary and x[0] < 0:
+                elif binary and x[0] > 0:
                     best_move = mv
     uci = best_move.uci()
 

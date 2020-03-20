@@ -1,46 +1,5 @@
-class unet_simple(nn.Module):
-  def __init__(self):
-    super(unet_simple,self).__init__()
-    topc = 64
-    midc = topc * 2
-    lowc = midc * 2
-    self.enc1 = nn.Sequential(
-      nn.Conv2d(17,topc,kernel_size=3,padding=1),
-      nn.ReLU(),
-      nn.Conv2d(topc,topc,kernel_size=3,padding=1),
-      nn.ReLU()
-    )
-    self.enc2 = nn.Sequential(
-      nn.Conv2d(topc,midc,kernel_size=3,padding=1),
-      nn.ReLU(),
-      nn.Conv2d(midc,midc,kernel_size=3,padding=1),
-      nn.ReLU()
-    )
-    self.enc3 = nn.Sequential(
-      nn.Conv2d(midc,lowc,kernel_size=3,padding=1),
-      nn.ReLU(),
-      nn.Conv2d(lowc,lowc,kernel_size=3,padding=1),
-      nn.ReLU()
-    )
-    self.dec3 = nn.Sequential(
-      nn.ConvTranspose2d(lowc,midc,kernel_size=2,stride=2),
-      nn.ReLU()
-    )
-    self.dec2 = nn.Sequential(
-      nn.Conv2d(lowc,midc,kernel_size=3,padding=1),
-      nn.ReLU(),
-      nn.Conv2d(midc,midc,kernel_size=3,padding=1),
-      nn.ReLU(),
-      nn.ConvTranspose2d(midc,topc,kernel_size=2,stride=2),
-      nn.ReLU()
-    )
-    self.dec1 = nn.Sequential(
-      nn.Conv2d(midc,topc,kernel_size=3,padding=1),
-      nn.ReLU(),
-      nn.Conv2d(topc,topc,kernel_size=3,padding=1),
-      nn.ReLU()
-    )
-    self.out = nn.Conv2d(topc,64,kernel_size=1)
+
+
   def forward(self,x):
     e1 = self.enc1(x)
     e2 = self.enc2(nn.functional.max_pool2d(e1, kernel_size=2,stride=2))

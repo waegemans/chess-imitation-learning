@@ -78,7 +78,7 @@ for e,b in zip(data['epoch'],data['batch_count']):
   ax[2].axvline(x=b, ymin=0.0, ymax=1.0, color='r', alpha=0.1)
   ax[3].axvline(x=b, ymin=0.0, ymax=1.0, color='r', alpha=0.1)
 
-log = True
+log = False
 if log:
   ax[0].set_xscale('log')
   ax[1].set_xscale('log')
