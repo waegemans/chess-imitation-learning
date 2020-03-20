@@ -67,38 +67,50 @@ class unet_simple(nn.Module):
     lowc = midc * 2
     self.enc1 = nn.Sequential(
       nn.Conv2d(17,topc,kernel_size=3,padding=1),
+      nn.BatchNorm2d(topc),
       nn.ReLU(),
       nn.Conv2d(topc,topc,kernel_size=3,padding=1),
+      nn.BatchNorm2d(topc),
       nn.ReLU()
     )
     self.enc2 = nn.Sequential(
       nn.Conv2d(topc,midc,kernel_size=3,padding=1),
+      nn.BatchNorm2d(midc),
       nn.ReLU(),
       nn.Conv2d(midc,midc,kernel_size=3,padding=1),
+      nn.BatchNorm2d(midc),
       nn.ReLU()
     )
     self.enc3 = nn.Sequential(
       nn.Conv2d(midc,lowc,kernel_size=3,padding=1),
+      nn.BatchNorm2d(lowc),
       nn.ReLU(),
       nn.Conv2d(lowc,lowc,kernel_size=3,padding=1),
+      nn.BatchNorm2d(lowc),
       nn.ReLU()
     )
     self.dec3 = nn.Sequential(
       nn.ConvTranspose2d(lowc,midc,kernel_size=2,stride=2),
+      nn.BatchNorm2d(midc),
       nn.ReLU()
     )
     self.dec2 = nn.Sequential(
       nn.Conv2d(lowc,midc,kernel_size=3,padding=1),
+      nn.BatchNorm2d(midc),
       nn.ReLU(),
       nn.Conv2d(midc,midc,kernel_size=3,padding=1),
+      nn.BatchNorm2d(midc),
       nn.ReLU(),
       nn.ConvTranspose2d(midc,topc,kernel_size=2,stride=2),
+      nn.BatchNorm2d(topc),
       nn.ReLU()
     )
     self.dec1 = nn.Sequential(
       nn.Conv2d(midc,topc,kernel_size=3,padding=1),
+      nn.BatchNorm2d(topc),
       nn.ReLU(),
       nn.Conv2d(topc,topc,kernel_size=3,padding=1),
+      nn.BatchNorm2d(topc),
       nn.ReLU()
     )
     self.out = nn.Conv2d(topc,64,kernel_size=1)
