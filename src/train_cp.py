@@ -33,11 +33,11 @@ os.mkdir(log_dir)
 
 log_file = open(log_dir+"out.csv", "w")
 
-model = models.unet_simple().to(device)
+model = models.cnn_alpha_small().to(device)
 model.apply(init_weights)
 #model = torch.load("output/0ab90067a02d8eb69c5aa4756eeed062d4872c5a/model_ep7.nn",map_location=device)
 
-optimizer = optim.SGD(filter(lambda p: p.requires_grad, model.parameters()), lr=1e-0, momentum=.9)
+optimizer = optim.SGD(filter(lambda p: p.requires_grad, model.parameters()), lr=1e-3, momentum=.9)
 scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.67, patience=0, verbose=True, threshold=1e-2)
 
 '''
