@@ -27,4 +27,4 @@ class cnn_res_block(nn.Module):
     
     def forward(self, x):
         out = self.block(x)
-        return nn.functional.relu(out+x)
+        return nn.functional.relu(out)#+x)
