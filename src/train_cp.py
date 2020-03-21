@@ -112,15 +112,15 @@ def validate_batch():
     x,c,m,l = next(val_iter)
   
   x,c,m,l = x.to(device),c.to(device),m.to(device),l.to(device)
-  model.eval()
-  predicted = model(x)
-  predicted = predicted.masked_fill(l==0,-float('inf'))
-  val_loss = loss_fcn(predicted,c,m,l)
-  val_acc = acc_fnc(predicted.detach(),c,m)
-  min_cp_loss = min_cp_loss_fnc(predicted.detach(),c)
-  top_1cp_acc = top_1cp_acc_fnc(predicted.detach(),c)
+  with torch.no_grad():
+    predicted = model(x)
+    predicted = predicted.masked_fill(l==0,-float('inf'))
+    val_loss = loss_fcn(predicted,c,m,l)
+    val_acc = acc_fnc(predicted.detach(),c,m)
+    min_cp_loss = min_cp_loss_fnc(predicted.detach(),c)
+    top_1cp_acc = top_1cp_acc_fnc(predicted.detach(),c)
 
-  return val_loss.detach().data.cpu().numpy(), val_acc, min_cp_loss, top_1cp_acc
+    return val_loss.detach().data.cpu().numpy(), val_acc, min_cp_loss, top_1cp_acc
 
 
 def train():
