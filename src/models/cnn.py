@@ -72,7 +72,7 @@ class unet_simple(nn.Module):
       nn.Dropout2d(0.1),
       nn.Conv2d(topc,topc,kernel_size=3,padding=1),
       nn.BatchNorm2d(topc),
-      nn.ReLU()
+      nn.ReLU(),
       nn.Dropout2d(0.1),
     )
     self.enc2 = nn.Sequential(
@@ -82,7 +82,7 @@ class unet_simple(nn.Module):
       nn.Dropout2d(0.1),
       nn.Conv2d(midc,midc,kernel_size=3,padding=1),
       nn.BatchNorm2d(midc),
-      nn.ReLU()
+      nn.ReLU(),
       nn.Dropout2d(0.1),
     )
     self.enc3 = nn.Sequential(
@@ -92,13 +92,13 @@ class unet_simple(nn.Module):
       nn.Dropout2d(0.1),
       nn.Conv2d(lowc,lowc,kernel_size=3,padding=1),
       nn.BatchNorm2d(lowc),
-      nn.ReLU()
+      nn.ReLU(),
       nn.Dropout2d(0.1),
     )
     self.dec3 = nn.Sequential(
       nn.ConvTranspose2d(lowc,midc,kernel_size=2,stride=2),
       nn.BatchNorm2d(midc),
-      nn.ReLU()
+      nn.ReLU(),
       nn.Dropout2d(0.1),
     )
     self.dec2 = nn.Sequential(
@@ -112,7 +112,7 @@ class unet_simple(nn.Module):
       nn.Dropout2d(0.1),
       nn.ConvTranspose2d(midc,topc,kernel_size=2,stride=2),
       nn.BatchNorm2d(topc),
-      nn.ReLU()
+      nn.ReLU(),
       nn.Dropout2d(0.1),
     )
     self.dec1 = nn.Sequential(
@@ -122,7 +122,7 @@ class unet_simple(nn.Module):
       nn.Dropout2d(0.1),
       nn.Conv2d(topc,topc,kernel_size=3,padding=1),
       nn.BatchNorm2d(topc),
-      nn.ReLU()
+      nn.ReLU(),
       nn.Dropout2d(0.1),
     )
     self.out = nn.Conv2d(topc,64,kernel_size=1)
