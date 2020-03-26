@@ -37,7 +37,7 @@ model = models.unet_simple().to(device)
 model.apply(init_weights)
 #model = torch.load("output/0ab90067a02d8eb69c5aa4756eeed062d4872c5a/model_ep7.nn",map_location=device)
 
-optimizer = optim.SGD(filter(lambda p: p.requires_grad, model.parameters()), lr=1e-0, momentum=.9, weight_decay=0.01)
+optimizer = optim.SGD(filter(lambda p: p.requires_grad, model.parameters()), lr=1e-0, momentum=.9, weight_decay=1e-4)
 scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.67, patience=0, verbose=True, threshold=1e-2)
 
 '''
