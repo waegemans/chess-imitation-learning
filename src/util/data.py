@@ -5,7 +5,6 @@ def array_to_bitboard(x):
   return int(''.join(map(str,map(int,x[::-1]))),2)
 
 def board_to_state(board):
-  black,white = board.occupied_co
   res = np.zeros(773, np.float)
   for j,color in enumerate(board.occupied_co):
     for i,pieces in enumerate([board.pawns, board.bishops, board.knights, board.rooks, board.queens, board.kings]):
@@ -35,6 +34,12 @@ def state_to_cnn(state):
   for i in range(5):
     res[12+i,:,:] += state[768+i]
   return res
+
+def mirror_cnn(cnn):
+  return cnn[:,:,::-1].copy()
+
+def mirror_action(action):
+  return action.reshape(8,8,8,8)[:,::-1,:,::-1].copy()
 
 def state_to_board(state):
   board = chess.Board()

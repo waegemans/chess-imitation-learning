@@ -6,12 +6,15 @@ import glob
 import util
 import ast
 import progressbar
+import util.data as dutil
 
 
 class ChessMoveDataset_cp_it(torch.utils.data.IterableDataset):
-    def __init__(self, mode='train', precompute=False):
+    def __init__(self, mode='train', precompute=False, flip=False, mirror=False):
         super(ChessMoveDataset_cp_it,self).__init__()
         self.mode = mode
+        self.flip = flip
+        self.mirror = mirror
         if precompute:
             self.precompute()
         else:
@@ -81,7 +84,14 @@ class ChessMoveDataset_cp_it(torch.utils.data.IterableDataset):
             legal_mask = np.load('data/depth18_gamma0.200000/pre/legal_mask_%s_%d.npy'%(self.mode,idx))
 
             for j in range(len(cnn)):
-                yield torch.tensor(cnn[j], dtype=torch.float) ,torch.tensor(cp_loss[j], dtype=torch.float) ,torch.tensor(mask[j], dtype=torch.float), torch.tensor(legal_mask[j], dtype=torch.float)
+                cnnj,cp_lossj,maskj,legal_maskj = cnn[j],cp_loss[j],mask[j],legal_mask[j]
+                if self.mirror and np.random.rand() < 0.5:
+                    cnnj = dutil.mirror_cnn(cnnj)
+                    cp_lossj = dutil.mirror_action(cp_lossj)
+                    maskj = dutil.mirror_action(maskj)
+                    legal_maskj = dutil.mirror_action(legal_maskj)
+                
+                yield torch.tensor(cnnj, dtype=torch.float) ,torch.tensor(cp_lossj, dtype=torch.float) ,torch.tensor(maskj, dtype=torch.float), torch.tensor(legal_maskj, dtype=torch.float)
 
 
     def __len__(self):
