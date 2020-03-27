@@ -39,7 +39,7 @@ def mirror_cnn(cnn):
   return cnn[:,:,::-1].copy()
 
 def mirror_action(action):
-  return action.reshape(8,8,8,8)[:,::-1,:,::-1].copy()
+  return action.reshape(8,8,8,8)[:,::-1,:,::-1].reshape(-1).copy()
 
 def state_to_board(state):
   board = chess.Board()
