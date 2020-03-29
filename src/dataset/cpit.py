@@ -77,7 +77,7 @@ class ChessMoveDataset_cp_it(torch.utils.data.IterableDataset):
             num_workers = worker_info.num_workers
             it = range(worker_id, self.num_of_splits, num_workers)
         
-        for idx in it:
+        for idx in np.random.permutation(list(it)):
             cnn = np.load('data/depth18_gamma0.200000/pre/cnn_%s_%d.npy'%(self.mode,idx))
             cp_loss = np.load('data/depth18_gamma0.200000/pre/cp_loss_%s_%d.npy'%(self.mode,idx))
             mask = np.load('data/depth18_gamma0.200000/pre/mask_%s_%d.npy'%(self.mode,idx))
