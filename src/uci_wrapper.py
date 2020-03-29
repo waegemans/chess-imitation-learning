@@ -56,22 +56,24 @@ def go():
         b = board.mirror()
     state = util.board_to_state(b)
     cnn = util.state_to_cnn(state)
-
-    y = model(torch.tensor(cnn,dtype=torch.float,device=device).unsqueeze(0)).detach()
-    y = y - y.min()
-    y_masked = y.cpu().numpy() * util.movelist_to_actionmask(b.legal_moves)
-    uci = util.action_to_uci(y_masked)
-
-    if not board.turn:
-        uci = util.flip_uci(uci)
-        
-    try:
-        board.push_uci(uci)
-        board.pop()
-    except:
-        uci += 'q'
     
-    print("bestmove " + uci)
+    model.train()
+    with torch.no_grad():
+        y = model(torch.tensor(cnn,dtype=torch.float,device=device).unsqueeze(0)).detach()
+        y = y - y.min()
+        y_masked = y.cpu().numpy() * util.movelist_to_actionmask(b.legal_moves)
+        uci = util.action_to_uci(y_masked)
+
+        if not board.turn:
+            uci = util.flip_uci(uci)
+            
+        try:
+            board.push_uci(uci)
+            board.pop()
+        except:
+            uci += 'q'
+    
+        print("bestmove " + uci)
 
 def go_state(mode='buckets'):
     global board

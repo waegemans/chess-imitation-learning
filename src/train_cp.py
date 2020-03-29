@@ -37,7 +37,7 @@ model = models.unet_simple().to(device)
 model.apply(init_weights)
 #model = torch.load("output/0ab90067a02d8eb69c5aa4756eeed062d4872c5a/model_ep7.nn",map_location=device)
 
-optimizer = optim.SGD(filter(lambda p: p.requires_grad, model.parameters()), lr=1e-0, momentum=.9)
+optimizer = optim.SGD(filter(lambda p: p.requires_grad, model.parameters()), lr=1e-0, momentum=.9, weight_decay=1e-4)
 scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.67, patience=0, verbose=True, threshold=1e-2)
 
 '''
@@ -47,7 +47,7 @@ valn = int(len(ds)*0.1)//batch_size * batch_size
 
 trainset,valset = torch.utils.data.random_split(ds,[len(ds)-valn,valn])
 '''
-trainset,valset = ChessMoveDataset_cp_it(mirror=True),ChessMoveDataset_cp_it(mode='val')
+trainset,valset = ChessMoveDataset_cp_it(mirror=False),ChessMoveDataset_cp_it(mode='val')
 
 train_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=False, num_workers=8, drop_last=True)
 val_loader = torch.utils.data.DataLoader(valset, batch_size=batch_size, shuffle=False, drop_last=True)
