@@ -1,15 +1,4 @@
 
-
-  def forward(self,x):
-    e1 = self.enc1(x)
-    e2 = self.enc2(nn.functional.max_pool2d(e1, kernel_size=2,stride=2))
-    e3 = self.enc3(nn.functional.max_pool2d(e2, kernel_size=2,stride=2))
-    d3 = self.dec3(e3)
-    d2 = self.dec2(torch.cat((d3,e2),dim=1))
-    d1 = self.dec1(torch.cat((d2,e1),dim=1))
-    out = self.out(d1)
-    return out.reshape((out.shape[0],-1))
-
 class RecNN(nn.Module):
   def __init__(self):
     super(RecNN,self).__init__()

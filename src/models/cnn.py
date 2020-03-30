@@ -62,7 +62,7 @@ class cnn_alpha_small(nn.Module):
 class unet_simple(nn.Module):
   def __init__(self):
     super(unet_simple,self).__init__()
-    topc = 96
+    topc = 128
     midc = topc * 2
     lowc = midc * 2
     self.enc1 = nn.Sequential(

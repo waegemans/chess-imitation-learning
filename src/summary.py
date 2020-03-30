@@ -10,6 +10,6 @@ if __name__ == "__main__":
 
     gdata = data.groupby(['epoch']).mean()[:-1]
     midx = gdata.idxmax()
-    sdata = gdata.iloc[midx].copy()
+    sdata = gdata.loc[midx].copy()
     sdata['field'] = midx.index
     print(sdata.reset_index().set_index('field').loc[['val_acc','val_1cp_acc','val_min_cp']])
