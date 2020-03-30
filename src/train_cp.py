@@ -22,6 +22,7 @@ def init_weights(m):
     m.bias.data.fill_(0.01)
 
 device = ('cuda:0' if torch.cuda.is_available() and torch.cuda.device_count() > 0 else 'cpu')
+startepoch = 30
 epochs = 1000
 batch_size = 1<<10
 random_subset = None
@@ -33,11 +34,11 @@ os.mkdir(log_dir)
 
 log_file = open(log_dir+"out.csv", "w")
 
-model = models.unet_simple().to(device)
-model.apply(init_weights)
-#model = torch.load("output/0ab90067a02d8eb69c5aa4756eeed062d4872c5a/model_ep7.nn",map_location=device)
+#model = models.unet_simple().to(device)
+#model.apply(init_weights)
+model = torch.load("output/8d6e354b79d4aae204877964ec927867e98303f2/model_ep30.nn",map_location=device)
 
-optimizer = optim.SGD(filter(lambda p: p.requires_grad, model.parameters()), lr=1e-0, momentum=.9, weight_decay=1e-4)
+optimizer = optim.SGD(filter(lambda p: p.requires_grad, model.parameters()), lr=1e-1, momentum=.9, weight_decay=1e-4)
 scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.67, patience=0, verbose=True, threshold=1e-2)
 
 '''
@@ -163,7 +164,7 @@ def validate():
   with torch.no_grad:
     pass
 
-for e in range(epochs):
+for e in range(startepoch,epochs):
   torch.save(model, log_dir+'model_ep%d.nn'%e)
   print ("Epoch %d of %d:"%(e,epochs))
 
