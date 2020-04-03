@@ -62,85 +62,7 @@ class cnn_alpha_small(nn.Module):
 class unet_simple(nn.Module):
   def __init__(self):
     super(unet_simple,self).__init__()
-    topc = 64
-    midc = topc * 2
-    lowc = midc * 2
-    self.enc1 = nn.Sequential(
-      nn.Conv2d(17,topc,kernel_size=3,padding=1),
-      nn.BatchNorm2d(topc),
-      nn.ReLU(),
-      nn.Dropout2d(0.1),
-      nn.Conv2d(topc,topc,kernel_size=3,padding=2,dilation=2),
-      nn.BatchNorm2d(topc),
-      nn.ReLU(),
-      nn.Dropout2d(0.1),
-    )
-    self.enc2 = nn.Sequential(
-      nn.Conv2d(topc,midc,kernel_size=3,padding=2,dilation=2),
-      nn.BatchNorm2d(midc),
-      nn.ReLU(),
-      nn.Dropout2d(0.1),
-      nn.Conv2d(midc,midc,kernel_size=3,padding=2,dilation=2),
-      nn.BatchNorm2d(midc),
-      nn.ReLU(),
-      nn.Dropout2d(0.1),
-    )
-    self.enc3 = nn.Sequential(
-      nn.Conv2d(midc,lowc,kernel_size=3,padding=2,dilation=2),
-      nn.BatchNorm2d(lowc),
-      nn.ReLU(),
-      nn.Dropout2d(0.1),
-      nn.Conv2d(lowc,lowc,kernel_size=3,padding=2,dilation=2),
-      nn.BatchNorm2d(lowc),
-      nn.ReLU(),
-      nn.Dropout2d(0.1),
-    )
-    self.dec3 = nn.Sequential(
-      nn.ConvTranspose2d(lowc,midc,kernel_size=2,stride=2),
-      nn.BatchNorm2d(midc),
-      nn.ReLU(),
-      nn.Dropout2d(0.1),
-    )
-    self.dec2 = nn.Sequential(
-      nn.Conv2d(lowc,midc,kernel_size=3,padding=2,dilation=2),
-      nn.BatchNorm2d(midc),
-      nn.ReLU(),
-      nn.Dropout2d(0.1),
-      nn.Conv2d(midc,midc,kernel_size=3,padding=2,dilation=2),
-      nn.BatchNorm2d(midc),
-      nn.ReLU(),
-      nn.Dropout2d(0.1),
-      nn.ConvTranspose2d(midc,topc,kernel_size=2,stride=2),
-      nn.BatchNorm2d(topc),
-      nn.ReLU(),
-      nn.Dropout2d(0.1),
-    )
-    self.dec1 = nn.Sequential(
-      nn.Conv2d(midc,topc,kernel_size=3,padding=2,dilation=2),
-      nn.BatchNorm2d(topc),
-      nn.ReLU(),
-      nn.Dropout2d(0.1),
-      nn.Conv2d(topc,topc,kernel_size=3,padding=2,dilation=2),
-      nn.BatchNorm2d(topc),
-      nn.ReLU(),
-      nn.Dropout2d(0.1),
-    )
-    self.out = nn.Conv2d(topc,64,kernel_size=1)
-
-  def forward(self,x):
-    e1 = self.enc1(x)
-    e2 = self.enc2(nn.functional.max_pool2d(e1, kernel_size=2,stride=2))
-    e3 = self.enc3(nn.functional.max_pool2d(e2, kernel_size=2,stride=2))
-    d3 = self.dec3(e3)
-    d2 = self.dec2(torch.cat((d3,e2),dim=1))
-    d1 = self.dec1(torch.cat((d2,e1),dim=1))
-    out = self.out(d1)
-    return out.reshape((out.shape[0],-1))
-
-class unet_long(nn.Module):
-  def __init__(self):
-    super(unet_simple,self).__init__()
-    topc = 64
+    topc = 256
     midc = topc * 2
     lowc = midc * 2
     self.enc1 = nn.Sequential(
@@ -214,7 +136,6 @@ class unet_long(nn.Module):
     d1 = self.dec1(torch.cat((d2,e1),dim=1))
     out = self.out(d1)
     return out.reshape((out.shape[0],-1))
-
 
 def fcn_small():
     return nn.Sequential(
