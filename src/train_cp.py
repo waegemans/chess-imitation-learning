@@ -57,7 +57,7 @@ log_file.write("epoch,batch_count,train_cross_entropy_loss,val_cross_entropy_los
 
 def multi_cross_entropy(predicted, target, mask, legal):
   # maximum number of legal moves this batch
-  maxlegal = (legal*mask).sum(dim=1).max()
+  maxlegal = int((legal*mask).sum(dim=1).max().item())
   mtarget = torch.masked_fill(target,(legal==0)|(mask==0),-float('inf'))
   ptarget = nn.functional.softmax(mtarget,dim=1)
   val,idx = ptarget.sort()
@@ -65,7 +65,9 @@ def multi_cross_entropy(predicted, target, mask, legal):
   best_val,best_idx = val[:,-maxlegal:],idx[:,-maxlegal:]
   loss = 0
   for i in range(maxlegal):
-    loss += (best_val[:,i]*nn.functional.cross_entropy(predicted,best_idx[:,i],reduction='none')).mean()
+    lloss = nn.functional.cross_entropy(predicted,best_idx[:,i],reduction='none')
+    lloss = torch.masked_fill(lloss,lloss == float('inf'), 0)
+    loss += (best_val[:,i]*lloss).mean()
   return loss
   '''
   loss = 0
