@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import util
-from modules import cnn_res_block
+from modules import cnn_res_block,inception_res_block
 
 class cnn_alpha(nn.Module):
     def __init__(self):
@@ -136,6 +136,41 @@ class unet_simple(nn.Module):
     d1 = self.dec1(torch.cat((d2,e1),dim=1))
     out = self.out(d1)
     return out.reshape((out.shape[0],-1))
+
+class flatten(nn.Module):
+  def __init__(self):
+    super(flatten,self).__init__()
+  def forward(self,x):
+    return x.reshape((x.shape[0],-1))
+
+
+def cnn_res_small(hidden=283):
+  return nn.Sequential(
+    nn.Conv2d(17,hidden,kernel_size=3,padding=1),
+    nn.BatchNorm2d(hidden),
+    nn.ReLU(),
+
+    cnn_res_block(hidden,kernel_size=3,dropout_p=0.1),
+    cnn_res_block(hidden,kernel_size=3,dropout_p=0.1),
+
+    
+    nn.Conv2d(hidden,64,kernel_size=1),
+    flatten()
+  )
+
+def inception_res_small(hidden=256):
+  return nn.Sequential(
+    nn.Conv2d(17,hidden,kernel_size=3,padding=1),
+    nn.BatchNorm2d(hidden),
+    nn.ReLU(),
+
+    inception_res_block(hidden,dropout_p=0.1),
+    inception_res_block(hidden,dropout_p=0.1),
+
+    
+    nn.Conv2d(hidden,64,kernel_size=1),
+    flatten()
+  )
 
 def fcn_small():
     return nn.Sequential(
