@@ -21,6 +21,8 @@ def init_weights(m):
     torch.nn.init.xavier_normal_(m.weight,2**0.5)
     m.bias.data.fill_(0.01)
 
+torch.backends.cudnn.benchmark = True
+
 device = ('cuda:0' if torch.cuda.is_available() and torch.cuda.device_count() > 0 else 'cpu')
 startepoch = 0
 epochs = 1000
@@ -34,20 +36,13 @@ os.mkdir(log_dir)
 
 log_file = open(log_dir+"out.csv", "w")
 
-model = models.cnn_res_small().to(device)
+model = models.inception_res_small().to(device)
 model.apply(init_weights)
 #model = torch.load("output/e4fee41f41ee88653738189b8c6a8c155ef96a78/model_ep23.nn",map_location=device)
 
 optimizer = optim.SGD(filter(lambda p: p.requires_grad, model.parameters()), lr=1e-1, momentum=.9, weight_decay=1e-4)
 scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.67, patience=0, verbose=True, threshold=1e-2)
 
-'''
-ds = ChessMoveDataset_cp()
-
-valn = int(len(ds)*0.1)//batch_size * batch_size
-
-trainset,valset = torch.utils.data.random_split(ds,[len(ds)-valn,valn])
-'''
 trainset,valset = ChessMoveDataset_cp_it(mirror=False),ChessMoveDataset_cp_it(mode='val')
 
 train_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=False, num_workers=8, drop_last=True)
