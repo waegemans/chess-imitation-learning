@@ -172,12 +172,16 @@ def inception_res_small(hidden=256):
     flatten()
   )
 
-def inception_res_small(hidden=256):
+def inception_res(hidden=256):
   return nn.Sequential(
     nn.Conv2d(17,hidden,kernel_size=3,padding=1),
     nn.BatchNorm2d(hidden),
     nn.ReLU(),
 
+    inception_res_block(hidden,dropout_p=0.1),
+    inception_res_block(hidden,dropout_p=0.1),
+    inception_res_block(hidden,dropout_p=0.1),
+    inception_res_block(hidden,dropout_p=0.1),
     inception_res_block(hidden,dropout_p=0.1),
     inception_res_block(hidden,dropout_p=0.1),
     inception_res_block(hidden,dropout_p=0.1),
