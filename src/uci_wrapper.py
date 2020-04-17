@@ -60,7 +60,7 @@ def go():
     model.train()
     with torch.no_grad():
         d = {}
-        for _ in range(10):
+        for _ in range(100):
             y = model(torch.tensor(cnn,dtype=torch.float,device=device).unsqueeze(0)).detach()
             y = y - y.min()
             y_masked = y.cpu().numpy() * util.movelist_to_actionmask(b.legal_moves)
@@ -116,8 +116,6 @@ def go_state(mode='buckets'):
         print("bestmove " + uci)
 
 def random_move(boards,p_dict):
-    if args.sample_type == 'random':
-        return [np.random.choice(list(b.legal_moves)).uci() for b in boards]
     cnn_t = torch.zeros(n_par_games,17,8,8,dtype=torch.float,device=device)
     mask_t = torch.zeros(n_par_games,64*64,dtype=torch.float,device=device)
     fen_without_count = [None for _ in boards]
