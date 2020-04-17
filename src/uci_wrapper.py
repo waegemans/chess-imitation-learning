@@ -59,20 +59,31 @@ def go():
     
     model.train()
     with torch.no_grad():
-        y = model(torch.tensor(cnn,dtype=torch.float,device=device).unsqueeze(0)).detach()
-        y = y - y.min()
-        y_masked = y.cpu().numpy() * util.movelist_to_actionmask(b.legal_moves)
-        uci = util.action_to_uci(y_masked)
+        d = {}
+        for _ in range(10):
+            y = model(torch.tensor(cnn,dtype=torch.float,device=device).unsqueeze(0)).detach()
+            y = y - y.min()
+            y_masked = y.cpu().numpy() * util.movelist_to_actionmask(b.legal_moves)
+            uci = util.action_to_uci(y_masked)
 
-        if not board.turn:
-            uci = util.flip_uci(uci)
-            
-        try:
-            board.push_uci(uci)
-            board.pop()
-        except:
-            uci += 'q'
-    
+            if not board.turn:
+                uci = util.flip_uci(uci)
+                
+            try:
+                board.push_uci(uci)
+                board.pop()
+            except:
+                uci += 'q'
+            if uci in d.keys():
+                d[uci] = 1
+            else:
+                d[uci] += 1
+
+        maxcount,bestuci=0,None
+        for uci,count in d.items():
+            if maxcount < count:
+                bestuci = uci
+                maxcount = count
         print("bestmove " + uci)
 
 def go_state(mode='buckets'):
