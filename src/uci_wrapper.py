@@ -74,7 +74,7 @@ def go():
                 board.pop()
             except:
                 uci += 'q'
-            if uci in d.keys():
+            if uci not in d.keys():
                 d[uci] = 1
             else:
                 d[uci] += 1
