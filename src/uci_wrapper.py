@@ -47,7 +47,7 @@ def position(args):
             board.push_uci(m)
             args = []
     if len(args) > 0:
-        board.board(fen=' '.join(args))
+        board = chess.Board(fen=' '.join(args))
     
 def go():
     global board
