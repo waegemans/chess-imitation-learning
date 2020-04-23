@@ -36,7 +36,7 @@ os.mkdir(log_dir)
 
 log_file = open(log_dir+"out.csv", "w")
 
-model = models.inception_res().to(device)
+model = models.unet_simple().to(device)
 model.apply(init_weights)
 #model = torch.load("output/e4fee41f41ee88653738189b8c6a8c155ef96a78/model_ep23.nn",map_location=device)
 
